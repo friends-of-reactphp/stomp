@@ -25,9 +25,11 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     /** @test */
     public function itShouldCreateConnectionFactoryWhenLoopGiven()
     {
+        $server = stream_socket_server('tcp://localhost:37234');
+
         $loop = $this->getMock('React\EventLoop\LoopInterface');
 
-        $client = new Client(array('loop' => $loop, 'host' => 'localhost', 'port' => 61613));
+        $client = new Client(array('loop' => $loop, 'host' => 'localhost', 'port' => 37234));
     }
 
     /**
