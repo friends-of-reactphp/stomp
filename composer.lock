@@ -1,0 +1,29 @@
+{
+    "hash": "9f8ed15e55eb8f93cfa0777a4301255a",
+    "packages": [
+        {
+            "package": "evenement/evenement",
+            "version": "v1.0.0"
+        },
+        {
+            "package": "react/event-loop",
+            "version": "v0.1.1"
+        },
+        {
+            "package": "react/socket",
+            "version": "v0.1.1"
+        },
+        {
+            "package": "react/stream",
+            "version": "v0.1.1"
+        }
+    ],
+    "packages-dev": null,
+    "aliases": [
+
+    ],
+    "minimum-stability": "stable",
+    "stability-flags": [
+
+    ]
+}

@@ -1,0 +1,14 @@
+{
+    "name": "react/stomp",
+    "description": "STOMP bindings for React.",
+    "keywords": ["stomp", "rabbitmq"],
+    "license": "MIT",
+    "require": {
+        "php": ">=5.3.2",
+        "evenement/evenement": "1.0.*",
+        "react/socket": "0.1.*"
+    },
+    "autoload": {
+        "psr-0": { "React\\Stomp": "src" }
+    }
+}
