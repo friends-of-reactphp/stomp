@@ -1,7 +1,5 @@
 <?php
 
-// http://www.rabbitmq.com/stomp.html
-
 require __DIR__.'/../vendor/autoload.php';
 
 $loop = React\EventLoop\Factory::create();

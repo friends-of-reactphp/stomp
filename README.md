@@ -56,3 +56,8 @@ To run the test suite, you need PHPUnit.
 ## License
 
 MIT, see LICENSE.
+
+## Resources
+
+* [STOMP Protocol Specification, Version 1.1](http://stomp.github.com/stomp-specification-1.1.html)
+* [RabbitMQ STOMP Adapter](http://www.rabbitmq.com/stomp.html)
