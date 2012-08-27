@@ -46,24 +46,16 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $conn = $this->getMock('React\Socket\ConnectionInterface');
         $conn
             ->expects($this->once())
-            ->method('getRemoteAddress')
-            ->will($this->returnValue('localhost'));
-        $conn
-            ->expects($this->once())
             ->method('write')
             ->with("CONNECT\naccept-version:1.1\nhost:localhost\n\n\x00");
 
-        $client = new Client(array('connection' => $conn));
+        $client = new Client(array('connection' => $conn, 'vhost' => 'localhost'));
     }
 
     /** @test */
     public function itShouldChangeToConnectedStateWhenReceivingConnectedResponse()
     {
         $conn = $this->getMock('React\Socket\ConnectionInterface');
-        $conn
-            ->expects($this->once())
-            ->method('getRemoteAddress')
-            ->will($this->returnValue('localhost'));
 
         $client = $this->getConnectedClient($conn);
     }
@@ -73,11 +65,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     {
         $conn = $this->getMock('React\Socket\ConnectionInterface');
         $conn
-            ->expects($this->once())
-            ->method('getRemoteAddress')
-            ->will($this->returnValue('localhost'));
-        $conn
-            ->expects($this->at(3))
+            ->expects($this->at(2))
             ->method('write')
             ->with("SEND\ndestination:/foo\ncontent-length:5\ncontent-type:text/plain\n\nhello\x00");
 
@@ -99,10 +87,6 @@ class ClientTest extends \PHPUnit_Framework_TestCase
             }));
 
         $conn = $this->getMock('React\Socket\ConnectionInterface');
-        $conn
-            ->expects($this->once())
-            ->method('getRemoteAddress')
-            ->will($this->returnValue('localhost'));
 
         $client = $this->getConnectedClient($conn);
         $subscriptionId = $client->subscribe('/foo', $callback);
@@ -149,10 +133,6 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function disconnectShouldGracefullyDisconnect()
     {
         $conn = $this->getMock('React\Socket\ConnectionInterface');
-        $conn
-            ->expects($this->once())
-            ->method('getRemoteAddress')
-            ->will($this->returnValue('localhost'));
 
         $client = $this->getMockBuilder('React\Stomp\Client')
             ->setConstructorArgs(array(array('connection' => $conn)))
@@ -174,7 +154,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
     private function getConnectedClient(ConnectionInterface $conn)
     {
-        $client = new Client(array('connection' => $conn));
+        $client = new Client(array('connection' => $conn, 'vhost' => 'localhost'));
         $client->handleData("CONNECTED\n\n\x00");
 
         return $client;
