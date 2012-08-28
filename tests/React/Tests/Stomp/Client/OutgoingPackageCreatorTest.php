@@ -174,32 +174,6 @@ class OutgoingPackageCreatorTest extends \PHPUnit_Framework_TestCase
         $this->assertSame(State::STATUS_DISCONNECTING, $state->status);
     }
 
-    /**
-     * @test
-     * @expectedException React\Stomp\Client\ServerErrorException
-     * @expectedExceptionMessage whoops
-     */
-    public function receiveFrameShouldConvertErrorFrameToServerErrorException()
-    {
-        $state = new State();
-        $packageCreator = new OutgoingPackageCreator($state);
-
-        $frame = new Frame('ERROR', array('message' => 'whoops'));
-        $command = $packageCreator->receiveFrame($frame);
-    }
-
-    /** @test */
-    public function receiveFrameShouldReturnNoCommandsForMessageFrame()
-    {
-        $state = new State();
-        $packageCreator = new OutgoingPackageCreator($state);
-
-        $frame = new Frame('MESSAGE', array('message' => 'whoops'));
-        $command = $packageCreator->receiveFrame($frame);
-
-        $this->assertInstanceOf('React\Stomp\Client\Command\NullCommand', $command);
-    }
-
     private function assertFrameEquals(Frame $expected, Frame $frame)
     {
         $this->assertSame((string) $expected, (string) $frame);
