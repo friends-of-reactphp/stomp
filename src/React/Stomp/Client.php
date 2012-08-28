@@ -105,9 +105,7 @@ class Client extends EventEmitter
 
     public function handleData($data)
     {
-        $data = $this->conn->stomp->unparsed.$data;
-        list($frames, $data) = $this->parser->parse($data);
-        $this->conn->stomp->unparsed = $data;
+        $frames = $this->parseFramesFromConnectionAndData($data);
 
         foreach ($frames as $frame) {
             $command = $this->packageProcessor->receiveFrame($frame);
@@ -115,6 +113,15 @@ class Client extends EventEmitter
 
             $this->handleFrame($frame);
         }
+    }
+
+    public function parseFramesFromConnectionAndData($data)
+    {
+        $data = $this->conn->stomp->unparsed.$data;
+        list($frames, $data) = $this->parser->parse($data);
+        $this->conn->stomp->unparsed = $data;
+
+        return $frames;
     }
 
     public function handleFrame(Frame $frame)
