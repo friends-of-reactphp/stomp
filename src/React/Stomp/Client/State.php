@@ -10,7 +10,7 @@ class State
     const STATUS_DISCONNECTING = 3;
     const STATUS_DISCONNECTED = 4;
 
-    public $status = 0;
+    public $status = self::STATUS_INIT;
     public $session;
     public $server;
     public $subscriptions;

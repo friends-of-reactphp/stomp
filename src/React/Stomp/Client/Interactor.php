@@ -15,7 +15,6 @@ class Interactor
     public function __construct(State $state)
     {
         $this->state = $state;
-        $this->state->status = State::STATUS_INIT;
     }
 
     public function connect($host, $login = null, $passcode = null)
