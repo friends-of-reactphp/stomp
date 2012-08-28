@@ -19,7 +19,7 @@ class Interactor
 
     public function connect($host, $login = null, $passcode = null)
     {
-        $this->state->status = State::STATUS_CONNECTING;
+        $this->state->startConnecting();
 
         $headers = array('accept-version' => '1.1', 'host' => $host);
         if (null !== $login || null !== $passcode) {
@@ -88,8 +88,7 @@ class Interactor
 
     public function disconnect($receipt, array $headers = array())
     {
-        $this->state->status = State::STATUS_DISCONNECTING;
-        $this->state->receipt = $receipt;
+        $this->state->startDisconnecting($receipt);
 
         $headers['receipt'] = $receipt;
         return new Frame('DISCONNECT', $headers);
@@ -106,21 +105,22 @@ class Interactor
             throw new ServerErrorException($frame);
         }
 
-        if (State::STATUS_CONNECTING === $this->state->status) {
+        if ($this->state->isConnecting()) {
             if ('CONNECTED' !== $frame->command) {
                 throw new InvalidFrameException(sprintf("Received frame with command '%s', expected 'CONNECTED'."));
             }
 
-            $this->state->status    = State::STATUS_CONNECTED;
-            $this->state->session   = $frame->getHeader('session');
-            $this->state->server    = $frame->getHeader('server');
+            $this->state->doneConnecting(
+                $frame->getHeader('session'),
+                $frame->getHeader('server')
+            );
 
             return new ConnectionEstablishedCommand();
         }
 
         if (State::STATUS_DISCONNECTING === $this->state->status) {
-            if ('RECEIPT' === $frame->command && $this->state->receipt === $frame->getHeader('receipt-id')) {
-                $this->state->status = State::STATUS_DISCONNECTED;
+            if ('RECEIPT' === $frame->command && $this->state->isDisconnectionReceipt($frame->getHeader('receipt-id'))) {
+                $this->state->doneDisconnecting();
 
                 return new CloseCommand();
             }

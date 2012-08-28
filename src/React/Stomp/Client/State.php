@@ -21,4 +21,42 @@ class State
     {
         $this->subscriptions = new SubscriptionBag();
     }
+
+    public function startConnecting()
+    {
+        $this->status = self::STATUS_CONNECTING;
+    }
+
+    public function isConnecting()
+    {
+        return self::STATUS_CONNECTING === $this->status;
+    }
+
+    public function doneConnecting($session, $server)
+    {
+        $this->status   = self::STATUS_CONNECTED;
+        $this->session  = $session;
+        $this->server   = $server;
+    }
+
+    public function startDisconnecting($receipt)
+    {
+        $this->status = self::STATUS_DISCONNECTING;
+        $this->receipt = $receipt;
+    }
+
+    public function isDisconnecting()
+    {
+        return self::STATUS_DISCONNECTING === $this->status;
+    }
+
+    public function isDisconnectionReceipt($receipt)
+    {
+        return $this->receipt === $receipt;
+    }
+
+    public function doneDisconnecting()
+    {
+        $this->status = self::STATUS_DISCONNECTED;
+    }
 }
