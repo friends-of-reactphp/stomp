@@ -45,6 +45,7 @@ $loop->run();
 * Heart-beating
 * Usable API for ack/nack
 * Transactions
+* Streaming frame bodies
 * Error handling
 
 ## Tests
