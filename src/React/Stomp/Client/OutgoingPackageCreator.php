@@ -8,7 +8,7 @@ use React\Stomp\Client\Command\CloseCommand;
 use React\Stomp\Client\Command\ConnectionEstablishedCommand;
 use React\Stomp\Client\Command\NullCommand;
 
-class Interactor
+class OutgoingPackageCreator
 {
     private $state;
 

@@ -2,12 +2,12 @@
 
 namespace React\Tests\Stomp\Client;
 
-use React\Stomp\Client\Interactor;
+use React\Stomp\Client\OutgoingPackageCreator;
 use React\Stomp\Client\State;
 use React\Stomp\Protocol\Frame;
 use React\Tests\Stomp\Constraint\FrameEquals;
 
-class InteractorTest extends \PHPUnit_Framework_TestCase
+class OutgoingPackageCreatorTest extends \PHPUnit_Framework_TestCase
 {
     /** @test */
     public function connectShouldEmitConnectFrame()
@@ -15,11 +15,11 @@ class InteractorTest extends \PHPUnit_Framework_TestCase
         $expectedFrame = new Frame('CONNECT', array('accept-version' => '1.1', 'host' => 'stomp.github.org'));
 
         $state = new State();
-        $interactor = new Interactor($state);
+        $packageCreator = new OutgoingPackageCreator($state);
 
         $this->assertSame(State::STATUS_INIT, $state->status);
 
-        $frame = $interactor->connect('stomp.github.org');
+        $frame = $packageCreator->connect('stomp.github.org');
 
         $this->assertFrameEquals($expectedFrame, $frame);
         $this->assertSame(State::STATUS_CONNECTING, $state->status);
@@ -31,9 +31,9 @@ class InteractorTest extends \PHPUnit_Framework_TestCase
         $expectedFrame = new Frame('CONNECT', array('accept-version' => '1.1', 'host' => 'stomp.github.org', 'login' => 'foo', 'passcode' => 'bar'));
 
         $state = new State();
-        $interactor = new Interactor($state);
+        $packageCreator = new OutgoingPackageCreator($state);
 
-        $frame = $interactor->connect('stomp.github.org', 'foo', 'bar');
+        $frame = $packageCreator->connect('stomp.github.org', 'foo', 'bar');
 
         $this->assertFrameEquals($expectedFrame, $frame);
     }
@@ -44,9 +44,9 @@ class InteractorTest extends \PHPUnit_Framework_TestCase
         $expectedFrame = new Frame('SEND', array('destination' => '/queue/a', 'content-length' => '13', 'content-type' => 'text/plain'), 'hello queue a');
 
         $state = new State();
-        $interactor = new Interactor($state);
+        $packageCreator = new OutgoingPackageCreator($state);
 
-        $frame = $interactor->send('/queue/a', 'hello queue a');
+        $frame = $packageCreator->send('/queue/a', 'hello queue a');
 
         $this->assertFrameEquals($expectedFrame, $frame);
     }
@@ -57,9 +57,9 @@ class InteractorTest extends \PHPUnit_Framework_TestCase
         $expectedFrame = new Frame('SUBSCRIBE', array('id' => 0, 'destination' => '/queue/a'));
 
         $state = new State();
-        $interactor = new Interactor($state);
+        $packageCreator = new OutgoingPackageCreator($state);
 
-        $frame = $interactor->subscribe('/queue/a');
+        $frame = $packageCreator->subscribe('/queue/a');
 
         $this->assertFrameEquals($expectedFrame, $frame);
     }
@@ -69,14 +69,14 @@ class InteractorTest extends \PHPUnit_Framework_TestCase
     {
 
         $state = new State();
-        $interactor = new Interactor($state);
+        $packageCreator = new OutgoingPackageCreator($state);
 
         $expectedFrame = new Frame('SUBSCRIBE', array('id' => 0, 'destination' => '/queue/a'));
-        $frame = $interactor->subscribe('/queue/a');
+        $frame = $packageCreator->subscribe('/queue/a');
         $this->assertFrameEquals($expectedFrame, $frame);
 
         $expectedFrame = new Frame('SUBSCRIBE', array('id' => 1, 'destination' => '/queue/a'));
-        $frame = $interactor->subscribe('/queue/a');
+        $frame = $packageCreator->subscribe('/queue/a');
         $this->assertFrameEquals($expectedFrame, $frame);
     }
 
@@ -86,9 +86,9 @@ class InteractorTest extends \PHPUnit_Framework_TestCase
         $expectedFrame = new Frame('UNSUBSCRIBE', array('id' => 0));
 
         $state = new State();
-        $interactor = new Interactor($state);
+        $packageCreator = new OutgoingPackageCreator($state);
 
-        $frame = $interactor->unsubscribe(0);
+        $frame = $packageCreator->unsubscribe(0);
 
         $this->assertFrameEquals($expectedFrame, $frame);
     }
@@ -99,9 +99,9 @@ class InteractorTest extends \PHPUnit_Framework_TestCase
         $expectedFrame = new Frame('ACK', array('subscription' => 0, 'message-id' => 5));
 
         $state = new State();
-        $interactor = new Interactor($state);
+        $packageCreator = new OutgoingPackageCreator($state);
 
-        $frame = $interactor->ack(0, 5);
+        $frame = $packageCreator->ack(0, 5);
 
         $this->assertFrameEquals($expectedFrame, $frame);
     }
@@ -112,9 +112,9 @@ class InteractorTest extends \PHPUnit_Framework_TestCase
         $expectedFrame = new Frame('NACK', array('subscription' => 0, 'message-id' => 5));
 
         $state = new State();
-        $interactor = new Interactor($state);
+        $packageCreator = new OutgoingPackageCreator($state);
 
-        $frame = $interactor->nack(0, 5);
+        $frame = $packageCreator->nack(0, 5);
 
         $this->assertFrameEquals($expectedFrame, $frame);
     }
@@ -125,9 +125,9 @@ class InteractorTest extends \PHPUnit_Framework_TestCase
         $expectedFrame = new Frame('BEGIN', array('transaction' => 'tx1'));
 
         $state = new State();
-        $interactor = new Interactor($state);
+        $packageCreator = new OutgoingPackageCreator($state);
 
-        $frame = $interactor->begin('tx1');
+        $frame = $packageCreator->begin('tx1');
 
         $this->assertFrameEquals($expectedFrame, $frame);
     }
@@ -138,9 +138,9 @@ class InteractorTest extends \PHPUnit_Framework_TestCase
         $expectedFrame = new Frame('COMMIT', array('transaction' => 'tx1'));
 
         $state = new State();
-        $interactor = new Interactor($state);
+        $packageCreator = new OutgoingPackageCreator($state);
 
-        $frame = $interactor->commit('tx1');
+        $frame = $packageCreator->commit('tx1');
 
         $this->assertFrameEquals($expectedFrame, $frame);
     }
@@ -151,9 +151,9 @@ class InteractorTest extends \PHPUnit_Framework_TestCase
         $expectedFrame = new Frame('ABORT', array('transaction' => 'tx1'));
 
         $state = new State();
-        $interactor = new Interactor($state);
+        $packageCreator = new OutgoingPackageCreator($state);
 
-        $frame = $interactor->abort('tx1');
+        $frame = $packageCreator->abort('tx1');
 
         $this->assertFrameEquals($expectedFrame, $frame);
     }
@@ -164,11 +164,11 @@ class InteractorTest extends \PHPUnit_Framework_TestCase
         $expectedFrame = new Frame('DISCONNECT', array('receipt' => 'foo'));
 
         $state = new State();
-        $interactor = new Interactor($state);
+        $packageCreator = new OutgoingPackageCreator($state);
 
         $this->assertSame(State::STATUS_INIT, $state->status);
 
-        $frame = $interactor->disconnect('foo');
+        $frame = $packageCreator->disconnect('foo');
 
         $this->assertFrameEquals($expectedFrame, $frame);
         $this->assertSame(State::STATUS_DISCONNECTING, $state->status);
@@ -182,20 +182,20 @@ class InteractorTest extends \PHPUnit_Framework_TestCase
     public function receiveFrameShouldConvertErrorFrameToServerErrorException()
     {
         $state = new State();
-        $interactor = new Interactor($state);
+        $packageCreator = new OutgoingPackageCreator($state);
 
         $frame = new Frame('ERROR', array('message' => 'whoops'));
-        $command = $interactor->receiveFrame($frame);
+        $command = $packageCreator->receiveFrame($frame);
     }
 
     /** @test */
     public function receiveFrameShouldReturnNoCommandsForMessageFrame()
     {
         $state = new State();
-        $interactor = new Interactor($state);
+        $packageCreator = new OutgoingPackageCreator($state);
 
         $frame = new Frame('MESSAGE', array('message' => 'whoops'));
-        $command = $interactor->receiveFrame($frame);
+        $command = $packageCreator->receiveFrame($frame);
 
         $this->assertInstanceOf('React\Stomp\Client\Command\NullCommand', $command);
     }

@@ -4,7 +4,7 @@ namespace React\Stomp;
 
 use Evenement\EventEmitter;
 use React\EventLoop\LoopInterface;
-use React\Stomp\Client\Interactor;
+use React\Stomp\Client\OutgoingPackageCreator;
 use React\Stomp\Client\State;
 use React\Stomp\Client\Command\CommandInterface;
 use React\Stomp\Client\Command\CloseCommand;
@@ -21,7 +21,7 @@ class Client extends EventEmitter
     );
 
     private $parser;
-    private $interactor;
+    private $outgoingPackageCreator;
     private $subscriptions = array();
 
     public function __construct(array $options)
@@ -32,7 +32,7 @@ class Client extends EventEmitter
         $this->conn->stomp = new State();
 
         $this->parser = new Parser();
-        $this->interactor = isset($options['interactor']) ? $options['interactor'] : new Interactor($this->conn->stomp);
+        $this->outgoingPackageCreator = isset($options['outgoing_package_creator']) ? $options['outgoing_package_creator'] : new OutgoingPackageCreator($this->conn->stomp);
 
         $this->conn->on('data', array($this, 'handleData'));
 
@@ -40,7 +40,7 @@ class Client extends EventEmitter
         $login = isset($options['login']) ? $options['login'] : null;
         $passcode = isset($options['passcode']) ? $options['passcode'] : null;
 
-        $frame = $this->interactor->connect($host, $login, $passcode);
+        $frame = $this->outgoingPackageCreator->connect($host, $login, $passcode);
         $this->conn->write((string) $frame);
     }
 
@@ -70,13 +70,13 @@ class Client extends EventEmitter
 
     public function send($destination, $body, array $headers = array())
     {
-        $frame = $this->interactor->send($destination, $body, $headers);
+        $frame = $this->outgoingPackageCreator->send($destination, $body, $headers);
         $this->conn->write((string) $frame);
     }
 
     public function subscribe($destination, $callback, $ack = 'auto', array $headers = array())
     {
-        $frame = $this->interactor->subscribe($destination, $headers);
+        $frame = $this->outgoingPackageCreator->subscribe($destination, $headers);
         $this->conn->write((string) $frame);
 
         $subscriptionId = $frame->getHeader('id');
@@ -87,7 +87,7 @@ class Client extends EventEmitter
 
     public function unsubscribe($subscriptionId, array $headers = array())
     {
-        $frame = $this->interactor->unsubscribe($subscriptionId, $headers);
+        $frame = $this->outgoingPackageCreator->unsubscribe($subscriptionId, $headers);
         $this->conn->write((string) $frame);
 
         unset($this->subscriptions[$subscriptionId]);
@@ -96,7 +96,7 @@ class Client extends EventEmitter
     public function disconnect()
     {
         $receipt = $this->generateReceiptId();
-        $frame = $this->interactor->disconnect($receipt);
+        $frame = $this->outgoingPackageCreator->disconnect($receipt);
         $this->conn->write((string) $frame);
     }
 
@@ -107,7 +107,7 @@ class Client extends EventEmitter
         $this->conn->stomp->unparsed = $data;
 
         foreach ($frames as $frame) {
-            $command = $this->interactor->receiveFrame($frame);
+            $command = $this->outgoingPackageCreator->receiveFrame($frame);
             $this->executeCommand($command);
 
             $this->handleFrame($frame);
