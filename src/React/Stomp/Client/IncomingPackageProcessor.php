@@ -40,7 +40,7 @@ class IncomingPackageProcessor
             return new ConnectionEstablishedCommand();
         }
 
-        if (State::STATUS_DISCONNECTING === $this->state->status) {
+        if ($this->state->isDisconnecting()) {
             if ('RECEIPT' === $frame->command && $this->state->isDisconnectionReceipt($frame->getHeader('receipt-id'))) {
                 $this->state->doneDisconnecting();
 
