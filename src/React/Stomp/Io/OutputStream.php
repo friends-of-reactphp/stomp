@@ -12,7 +12,7 @@ use React\Stream\Util;
 // $output->pipe($conn);
 // $output->sendFrame($frame);
 
-class OutputStream extends EventEmitter implements ReadableStreamInterface
+class OutputStream extends EventEmitter implements OutputStreamInterface, ReadableStreamInterface
 {
     private $readable = true;
     private $paused = false;

@@ -13,7 +13,7 @@ use React\Stream\WritableStreamInterface;
 // });
 // $conn->pipe($input);
 
-class InputStream extends EventEmitter implements WritableStreamInterface
+class InputStream extends EventEmitter implements InputStreamInterface, WritableStreamInterface
 {
     private $writable = true;
     private $unparsed = '';

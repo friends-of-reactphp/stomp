@@ -11,8 +11,8 @@ use React\Stomp\Client\Command\CommandInterface;
 use React\Stomp\Client\Command\CloseCommand;
 use React\Stomp\Client\Command\ConnectionEstablishedCommand;
 use React\Stomp\Client\Command\NullCommand;
-use React\Stomp\Io\InputStream;
-use React\Stomp\Io\OutputStream;
+use React\Stomp\Io\InputStreamInterface;
+use React\Stomp\Io\OutputStreamInterface;
 use React\Stomp\Protocol\Frame;
 use React\Stomp\Protocol\Parser;
 
@@ -23,7 +23,7 @@ class Client extends EventEmitter
     private $packageCreator;
     private $subscriptions = array();
 
-    public function __construct(InputStream $input, OutputStream $output, array $options)
+    public function __construct(InputStreamInterface $input, OutputStreamInterface $output, array $options)
     {
         $state = new State();
         $this->packageProcessor = new IncomingPackageProcessor($state);
