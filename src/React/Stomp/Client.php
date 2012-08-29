@@ -11,76 +11,51 @@ use React\Stomp\Client\Command\CommandInterface;
 use React\Stomp\Client\Command\CloseCommand;
 use React\Stomp\Client\Command\ConnectionEstablishedCommand;
 use React\Stomp\Client\Command\NullCommand;
+use React\Stomp\Io\InputStream;
+use React\Stomp\Io\OutputStream;
 use React\Stomp\Protocol\Frame;
 use React\Stomp\Protocol\Parser;
 
 class Client extends EventEmitter
 {
-    private $defaultOptions = array(
-        'host' => '127.0.0.1',
-        'port' => 61613,
-    );
-
     private $parser;
     private $packageProcessor;
     private $packageCreator;
     private $subscriptions = array();
 
-    public function __construct(array $options)
+    public function __construct(InputStream $input, OutputStream $output, array $options)
     {
-        $options = array_merge($this->defaultOptions, $options);
+        $state = new State();
+        $this->packageProcessor = new IncomingPackageProcessor($state);
+        $this->packageCreator = new OutgoingPackageCreator($state);
 
-        $this->conn = $this->getConnection($options);
-        $this->conn->stomp = new State();
+        $this->input = $input;
+        $this->input->on('frame', array($this, 'handleFrame'));
+        $this->output = $output;
 
-        $this->parser = new Parser();
-        $this->packageProcessor = isset($options['package_processor']) ? $options['package_processor'] : new IncomingPackageProcessor($this->conn->stomp);
-        $this->packageCreator = isset($options['package_creator']) ? $options['package_creator'] : new OutgoingPackageCreator($this->conn->stomp);
+        $this->sendConnectFrame($options);
+    }
 
-        $this->conn->on('data', array($this, 'handleData'));
-
+    public function sendConnectFrame($options)
+    {
         $host = isset($options['vhost']) ? $options['vhost'] : $options['host'];
         $login = isset($options['login']) ? $options['login'] : null;
         $passcode = isset($options['passcode']) ? $options['passcode'] : null;
 
         $frame = $this->packageCreator->connect($host, $login, $passcode);
-        $this->conn->write((string) $frame);
-    }
-
-    public function getConnection($options)
-    {
-        if (isset($options['connection'])) {
-            return $options['connection'];
-        }
-
-        $connFactory = $this->getConnectionFactory($options);
-
-        return $connFactory->create($options);
-    }
-
-    public function getConnectionFactory(array $options)
-    {
-        if (isset($options['connection_factory'])) {
-            return $options['connection_factory'];
-        }
-
-        if (isset($options['loop'])) {
-            return new ConnectionFactory($options['loop']);
-        }
-
-        throw new \InvalidArgumentException('Invalid configuration, must container either of: loop, connection_factory, connection.');
+        $this->output->sendFrame($frame);
     }
 
     public function send($destination, $body, array $headers = array())
     {
         $frame = $this->packageCreator->send($destination, $body, $headers);
-        $this->conn->write((string) $frame);
+        $this->output->sendFrame($frame);
     }
 
     public function subscribe($destination, $callback, $ack = 'auto', array $headers = array())
     {
         $frame = $this->packageCreator->subscribe($destination, $headers);
-        $this->conn->write((string) $frame);
+        $this->output->sendFrame($frame);
 
         $subscriptionId = $frame->getHeader('id');
         $this->subscriptions[$subscriptionId] = $callback;
@@ -91,7 +66,7 @@ class Client extends EventEmitter
     public function unsubscribe($subscriptionId, array $headers = array())
     {
         $frame = $this->packageCreator->unsubscribe($subscriptionId, $headers);
-        $this->conn->write((string) $frame);
+        $this->output->sendFrame($frame);
 
         unset($this->subscriptions[$subscriptionId]);
     }
@@ -100,32 +75,14 @@ class Client extends EventEmitter
     {
         $receipt = $this->generateReceiptId();
         $frame = $this->packageCreator->disconnect($receipt);
-        $this->conn->write((string) $frame);
-    }
-
-    public function handleData($data)
-    {
-        $frames = $this->parseFramesFromConnectionAndData($data);
-
-        foreach ($frames as $frame) {
-            $command = $this->packageProcessor->receiveFrame($frame);
-            $this->executeCommand($command);
-
-            $this->handleFrame($frame);
-        }
-    }
-
-    public function parseFramesFromConnectionAndData($data)
-    {
-        $data = $this->conn->stomp->unparsed.$data;
-        list($frames, $data) = $this->parser->parse($data);
-        $this->conn->stomp->unparsed = $data;
-
-        return $frames;
+        $this->output->sendFrame($frame);
     }
 
     public function handleFrame(Frame $frame)
     {
+        $command = $this->packageProcessor->receiveFrame($frame);
+        $this->executeCommand($command);
+
         if ('MESSAGE' === $frame->command) {
             $this->notifySubscribers($frame);
             return;
@@ -147,7 +104,7 @@ class Client extends EventEmitter
     public function executeCommand(CommandInterface $command)
     {
         if ($command instanceof CloseCommand) {
-            $this->conn->close();
+            $this->output->close();
             return;
         }
 

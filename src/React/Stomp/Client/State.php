@@ -15,7 +15,6 @@ class State
     public $server;
     public $subscriptions;
     public $receipt;
-    public $unparsed;
 
     public function __construct()
     {

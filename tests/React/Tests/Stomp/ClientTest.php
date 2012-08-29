@@ -2,76 +2,51 @@
 
 namespace React\Tests\Stomp;
 
-use React\Socket\ConnectionInterface;
 use React\Stomp\Client;
+use React\Stomp\Io\InputStream;
+use React\Stomp\Io\OutputStream;
 use React\Stomp\Protocol\Frame;
+use React\Tests\Stomp\Constraint\FrameIsEqual;
 
-class ClientTest extends \PHPUnit_Framework_TestCase
+class ClientTest extends TestCase
 {
-    /** @test */
-    public function itShouldCallConnectionFactoryOnCreation()
-    {
-        $connFactory = $this->getMockBuilder('React\Stomp\ConnectionFactory')
-            ->disableOriginalConstructor()
-            ->getMock();
-        $connFactory
-            ->expects($this->once())
-            ->method('create')
-            ->will($this->returnValue($this->getMock('React\Socket\ConnectionInterface')));
-
-        $client = new Client(array('connection_factory' => $connFactory));
-    }
-
-    /** @test */
-    public function itShouldCreateConnectionFactoryWhenLoopGiven()
-    {
-        $server = stream_socket_server('tcp://localhost:37234');
-
-        $loop = $this->getMock('React\EventLoop\LoopInterface');
-
-        $client = new Client(array('loop' => $loop, 'host' => 'localhost', 'port' => 37234));
-    }
-
-    /**
-     * @test
-     * @expectedException InvalidArgumentException
-     * @expectedExceptionMessage Invalid configuration, must container either of: loop, connection_factory, connection.
-     */
-    public function itShouldThrowExceptionWhenNoConfigGiven()
-    {
-        $client = new Client(array());
-    }
-
     /** @test */
     public function itShouldSendConnectFrameOnCreation()
     {
-        $conn = $this->getMock('React\Socket\ConnectionInterface');
-        $conn
-            ->expects($this->once())
-            ->method('write')
-            ->with("CONNECT\naccept-version:1.1\nhost:localhost\n\n\x00");
+        $input = $this->createInputStreamMock();
 
-        $client = new Client(array('connection' => $conn, 'vhost' => 'localhost'));
+        $output = $this->getMock('React\Stomp\Io\OutputStream');
+        $output
+            ->expects($this->once())
+            ->method('sendFrame')
+            ->with($this->frameIsEqual(new Frame('CONNECT', array('accept-version' => '1.1', 'host' => 'localhost'))));
+
+        $client = new Client($input, $output, array('vhost' => 'localhost'));
     }
 
     /** @test */
     public function itShouldChangeToConnectedStateWhenReceivingConnectedResponse()
     {
-        $conn = $this->getMock('React\Socket\ConnectionInterface');
+        $input = $this->createInputStreamMock();
+        $output = $this->getMock('React\Stomp\Io\OutputStream');
 
-        $client = $this->getConnectedClient($conn);
+        $client = $this->getConnectedClient($input, $output);
     }
 
     /** @test */
     public function sendShouldSend()
     {
-        $conn = $this->getMock('React\Socket\ConnectionInterface');
-        $conn
-            ->expects($this->at(2))
-            ->method('write')
-            ->with("SEND\ndestination:/foo\ncontent-length:5\ncontent-type:text/plain\n\nhello\x00");
+        $input = $this->createInputStreamMock();
 
-        $client = $this->getConnectedClient($conn);
+        $output = $this->getMock('React\Stomp\Io\OutputStream');
+        $output
+            ->expects($this->at(1))
+            ->method('sendFrame')
+            ->with($this->frameIsEqual(
+                new Frame('SEND', array('destination' => '/foo', 'content-length' => '5', 'content-type' => 'text/plain'), 'hello')
+            ));
+
+        $client = $this->getConnectedClient($input, $output);
         $client->send('/foo', 'hello');
     }
 
@@ -88,9 +63,10 @@ class ClientTest extends \PHPUnit_Framework_TestCase
                 $capturedFrame = $frame;
             }));
 
-        $conn = $this->getMock('React\Socket\ConnectionInterface');
+        $input = $this->createInputStreamMock();
+        $output = $this->getMock('React\Stomp\Io\OutputStream');
 
-        $client = $this->getConnectedClient($conn);
+        $client = $this->getConnectedClient($input, $output);
         $subscriptionId = $client->subscribe('/foo', $callback);
 
         $responseFrame = new Frame(
@@ -98,19 +74,19 @@ class ClientTest extends \PHPUnit_Framework_TestCase
             array('subscription' => $subscriptionId, 'message-id' => 42, 'destination' => '/foo', 'content-type' => 'text/plain'),
             'this is a published message'
         );
-        $client->handleData((string) $responseFrame);
+        $input->emit('frame', array($responseFrame));
 
         $responseFrame = new Frame(
             'MESSAGE',
             array('subscription' => $subscriptionId, 'message-id' => 43, 'destination' => '/foo', 'content-type' => 'text/plain'),
             'this is a published message'
         );
-        $client->handleData((string) $responseFrame);
+        $input->emit('frame', array($responseFrame));
 
         $this->assertInstanceOf('React\Stomp\Protocol\Frame', $capturedFrame);
         $this->assertFrameEquals($responseFrame, $capturedFrame);
 
-        return array($client, $capturedFrame);
+        return array($input, $output, $client, $capturedFrame);
     }
 
     /**
@@ -119,7 +95,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     */
     public function callbackShouldNotBeCalledAfterUnsubscribe($data)
     {
-        list($client, $capturedFrame) = $data;
+        list($input, $output, $client, $capturedFrame) = $data;
 
         $client->unsubscribe($capturedFrame->getHeader('subscription'));
 
@@ -128,47 +104,46 @@ class ClientTest extends \PHPUnit_Framework_TestCase
             array('subscription' => 0, 'message-id' => 42, 'destination' => '/foo', 'content-type' => 'text/plain'),
             'this is a published message'
         );
-        $client->handleData((string) $responseFrame);
+        $input->emit('frame', array($responseFrame));
     }
 
     /** @test */
     public function disconnectShouldGracefullyDisconnect()
     {
-        $conn = $this->getMock('React\Socket\ConnectionInterface');
+        $input = $this->createInputStreamMock();
+        $output = $this->getMock('React\Stomp\Io\OutputStream');
 
         $client = $this->getMockBuilder('React\Stomp\Client')
-            ->setConstructorArgs(array(array('connection' => $conn)))
+            ->setConstructorArgs(array($input, $output, array('vhost' => 'localhost')))
             ->setMethods(array('generateReceiptId'))
             ->getMock();
         $client
             ->expects($this->once())
             ->method('generateReceiptId')
             ->will($this->returnValue('1234'));
-        $client->handleData("CONNECTED\n\n\x00");
+        $input->emit('frame', array(new Frame('CONNECTED')));
         $client->disconnect();
 
-        $conn
+        $output
             ->expects($this->once())
             ->method('close');
 
-        $client->handleData("RECEIPT\nreceipt-id:1234\n\n\x00");
+        $input->emit('frame', array(new Frame('RECEIPT', array('receipt-id' => '1234'))));
     }
 
-    private function getConnectedClient(ConnectionInterface $conn)
+    private function getConnectedClient(InputStream $input, OutputStream $output)
     {
-        $client = new Client(array('connection' => $conn, 'vhost' => 'localhost'));
-        $client->handleData("CONNECTED\n\n\x00");
+        $client = new Client($input, $output, array('vhost' => 'localhost'));
+        $input->emit('frame', array(new Frame('CONNECTED')));
 
         return $client;
     }
 
-    private function assertFrameEquals(Frame $expected, Frame $frame)
+    private function createInputStreamMock()
     {
-        $this->assertSame((string) $expected, (string) $frame);
-    }
-
-    private function createCallableMock()
-    {
-        return $this->getMock('React\Tests\Stomp\Stub\CallableStub');
+        return $this->getMockBuilder('React\Stomp\Io\InputStream')
+            ->setConstructorArgs(array($this->getMock('React\Stomp\Protocol\Parser')))
+            ->setMethods(array('isWritable', 'write', 'end', 'close'))
+            ->getMock();
     }
 }

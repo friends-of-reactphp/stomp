@@ -24,15 +24,16 @@ You can interact with a STOMP server by using the `React\Stomp\Client`.
 <?php
 
 $loop = React\EventLoop\Factory::create();
+$factory = new React\Stomp\Factory($loop);
+$client = $factory->createClient(array('vhost' => '/', 'login' => 'guest', 'passcode' => 'guest'));
 
-$client = new React\Stomp\Client(array('loop' => $loop, 'login' => 'guest', 'passcode' => 'guest'));
 $client->on('ready', function () use ($loop, $client) {
-    $client->subscribe('/foo', function ($frame) {
+    $client->subscribe('/topic/foo', function ($frame) {
         echo "Message received: {$frame->body}\n";
     });
 
     $loop->addPeriodicTimer(1, function () use ($client) {
-        $client->send('/foo', 'le message');
+        $client->send('/topic/foo', 'le message');
     });
 });
 
