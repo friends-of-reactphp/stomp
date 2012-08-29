@@ -144,6 +144,31 @@ class ClientTest extends TestCase
         $input->emit('frame', array(new Frame('RECEIPT', array('receipt-id' => '1234'))));
     }
 
+    /** @test */
+    public function processingErrorShouldResultInClientError()
+    {
+        $input = $this->createInputStreamMock();
+        $output = $this->getMock('React\Stomp\Io\OutputStream');
+
+        $client = $this->getConnectedClient($input, $output);
+        $client->on('error', $this->expectCallableOnce());
+
+        $input->emit('frame', array(new Frame('ERROR', array('message' => 'whoops'))));
+    }
+
+    /** @test */
+    public function inputErrorShouldResultInClientError()
+    {
+        $input = $this->createInputStreamMock();
+        $output = $this->getMock('React\Stomp\Io\OutputStream');
+
+        $client = $this->getConnectedClient($input, $output);
+        $client->on('error', $this->expectCallableOnce());
+
+        $e = new \Exception('Input had a problem.');
+        $input->emit('error', array($e));
+    }
+
     private function getConnectedClient(InputStream $input, OutputStream $output)
     {
         $client = new Client($input, $output, array('vhost' => 'localhost'));

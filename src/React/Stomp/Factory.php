@@ -35,6 +35,10 @@ class Factory
         $output = new OutputStream();
         $output->pipe($conn);
 
+        $conn->on('error', function ($e) use ($input) {
+            $input->emit('error', array($e));
+        });
+
         return new Client($input, $output, $options);
     }
 

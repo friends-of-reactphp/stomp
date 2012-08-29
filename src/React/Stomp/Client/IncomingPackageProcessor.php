@@ -6,6 +6,8 @@ use React\Stomp\Protocol\Frame;
 use React\Stomp\Client\Command\CloseCommand;
 use React\Stomp\Client\Command\ConnectionEstablishedCommand;
 use React\Stomp\Client\Command\NullCommand;
+use React\Stomp\Exception\ServerErrorException;
+use React\Stomp\Exception\InvalidFrameException;
 
 class IncomingPackageProcessor
 {

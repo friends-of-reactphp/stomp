@@ -4,7 +4,7 @@ namespace React\Stomp\Io;
 
 use Evenement\EventEmitterInterface;
 
-// Events: frame
+// Events: frame, error
 interface InputStreamInterface extends EventEmitterInterface
 {
 }

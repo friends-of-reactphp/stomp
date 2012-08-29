@@ -11,11 +11,13 @@ use React\Stomp\Client\Command\CommandInterface;
 use React\Stomp\Client\Command\CloseCommand;
 use React\Stomp\Client\Command\ConnectionEstablishedCommand;
 use React\Stomp\Client\Command\NullCommand;
+use React\Stomp\Exception\ProcessingException;
 use React\Stomp\Io\InputStreamInterface;
 use React\Stomp\Io\OutputStreamInterface;
 use React\Stomp\Protocol\Frame;
 use React\Stomp\Protocol\Parser;
 
+// Events: ready, error
 class Client extends EventEmitter
 {
     private $parser;
@@ -30,7 +32,8 @@ class Client extends EventEmitter
         $this->packageCreator = new OutgoingPackageCreator($state);
 
         $this->input = $input;
-        $this->input->on('frame', array($this, 'handleFrame'));
+        $this->input->on('frame', array($this, 'handleFrameEvent'));
+        $this->input->on('error', array($this, 'handleErrorEvent'));
         $this->output = $output;
 
         $this->sendConnectFrame($options);
@@ -78,7 +81,21 @@ class Client extends EventEmitter
         $this->output->sendFrame($frame);
     }
 
-    public function handleFrame(Frame $frame)
+    public function handleFrameEvent(Frame $frame)
+    {
+        try {
+            $this->processFrame($frame);
+        } catch (ProcessingException $e) {
+            $this->emit('error', array($e));
+        }
+    }
+
+    public function handleErrorEvent(\Exception $e)
+    {
+        $this->emit('error', array($e));
+    }
+
+    public function processFrame(Frame $frame)
     {
         $command = $this->packageProcessor->receiveFrame($frame);
         $this->executeCommand($command);
@@ -87,18 +104,6 @@ class Client extends EventEmitter
             $this->notifySubscribers($frame);
             return;
         }
-    }
-
-    public function notifySubscribers(Frame $frame)
-    {
-        $subscriptionId = $frame->getHeader('subscription');
-
-        if (!isset($this->subscriptions[$subscriptionId])) {
-            return;
-        }
-
-        $callback = $this->subscriptions[$subscriptionId];
-        call_user_func($callback, $frame);
     }
 
     public function executeCommand(CommandInterface $command)
@@ -118,6 +123,18 @@ class Client extends EventEmitter
         }
 
         throw new \Exception(sprintf("Unknown command '%s'", get_class($command)));
+    }
+
+    public function notifySubscribers(Frame $frame)
+    {
+        $subscriptionId = $frame->getHeader('subscription');
+
+        if (!isset($this->subscriptions[$subscriptionId])) {
+            return;
+        }
+
+        $callback = $this->subscriptions[$subscriptionId];
+        call_user_func($callback, $frame);
     }
 
     public function generateReceiptId()

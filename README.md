@@ -47,7 +47,6 @@ $loop->run();
 * Usable API for ack/nack
 * Transactions
 * Streaming frame bodies (using stream API)
-* Error handling
 
 ## Tests
 

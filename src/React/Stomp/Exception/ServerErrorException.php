@@ -1,10 +1,10 @@
 <?php
 
-namespace React\Stomp\Client;
+namespace React\Stomp\Exception;
 
 use React\Stomp\Protocol\Frame;
 
-class ServerErrorException extends \Exception
+class ServerErrorException extends ProcessingException
 {
     private $frame;
 

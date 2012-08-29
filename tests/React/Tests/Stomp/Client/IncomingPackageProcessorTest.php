@@ -11,7 +11,7 @@ class IncomingPackageProcessorTest extends \PHPUnit_Framework_TestCase
 {
     /**
      * @test
-     * @expectedException React\Stomp\Client\ServerErrorException
+     * @expectedException React\Stomp\Exception\ServerErrorException
      * @expectedExceptionMessage whoops
      */
     public function receiveFrameShouldConvertErrorFrameToServerErrorException()
