@@ -25,6 +25,19 @@ class ClientTest extends TestCase
     }
 
     /** @test */
+    public function itShouldEmitReadyAfterHandshake()
+    {
+        $input = $this->createInputStreamMock();
+        $output = $this->getMock('React\Stomp\Io\OutputStream');
+
+        $client = new Client($input, $output, array('vhost' => 'localhost'));
+        $client->on('ready', $this->expectCallableOnce());
+
+        $frame = new Frame('CONNECTED', array('session' => '1234', 'server' => 'React/alpha'));
+        $input->emit('frame', array($frame));
+    }
+
+    /** @test */
     public function itShouldChangeToConnectedStateWhenReceivingConnectedResponse()
     {
         $input = $this->createInputStreamMock();
