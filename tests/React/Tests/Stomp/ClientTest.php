@@ -3,8 +3,8 @@
 namespace React\Tests\Stomp;
 
 use React\Stomp\Client;
-use React\Stomp\Io\InputStream;
-use React\Stomp\Io\OutputStream;
+use React\Stomp\Io\InputStreamInterface;
+use React\Stomp\Io\OutputStreamInterface;
 use React\Stomp\Protocol\Frame;
 use React\Tests\Stomp\Constraint\FrameIsEqual;
 
@@ -15,7 +15,7 @@ class ClientTest extends TestCase
     {
         $input = $this->createInputStreamMock();
 
-        $output = $this->getMock('React\Stomp\Io\OutputStream');
+        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
         $output
             ->expects($this->once())
             ->method('sendFrame')
@@ -28,7 +28,7 @@ class ClientTest extends TestCase
     public function itShouldEmitReadyAfterHandshake()
     {
         $input = $this->createInputStreamMock();
-        $output = $this->getMock('React\Stomp\Io\OutputStream');
+        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
 
         $client = new Client($input, $output, array('vhost' => 'localhost'));
         $client->on('ready', $this->expectCallableOnce());
@@ -41,7 +41,7 @@ class ClientTest extends TestCase
     public function itShouldChangeToConnectedStateWhenReceivingConnectedResponse()
     {
         $input = $this->createInputStreamMock();
-        $output = $this->getMock('React\Stomp\Io\OutputStream');
+        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
 
         $client = $this->getConnectedClient($input, $output);
     }
@@ -51,7 +51,7 @@ class ClientTest extends TestCase
     {
         $input = $this->createInputStreamMock();
 
-        $output = $this->getMock('React\Stomp\Io\OutputStream');
+        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
         $output
             ->expects($this->at(1))
             ->method('sendFrame')
@@ -77,7 +77,7 @@ class ClientTest extends TestCase
             }));
 
         $input = $this->createInputStreamMock();
-        $output = $this->getMock('React\Stomp\Io\OutputStream');
+        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
 
         $client = $this->getConnectedClient($input, $output);
         $subscriptionId = $client->subscribe('/foo', $callback);
@@ -124,7 +124,7 @@ class ClientTest extends TestCase
     public function disconnectShouldGracefullyDisconnect()
     {
         $input = $this->createInputStreamMock();
-        $output = $this->getMock('React\Stomp\Io\OutputStream');
+        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
 
         $client = $this->getMockBuilder('React\Stomp\Client')
             ->setConstructorArgs(array($input, $output, array('vhost' => 'localhost')))
@@ -148,7 +148,7 @@ class ClientTest extends TestCase
     public function processingErrorShouldResultInClientError()
     {
         $input = $this->createInputStreamMock();
-        $output = $this->getMock('React\Stomp\Io\OutputStream');
+        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
 
         $client = $this->getConnectedClient($input, $output);
         $client->on('error', $this->expectCallableOnce());
@@ -160,7 +160,7 @@ class ClientTest extends TestCase
     public function inputErrorShouldResultInClientError()
     {
         $input = $this->createInputStreamMock();
-        $output = $this->getMock('React\Stomp\Io\OutputStream');
+        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
 
         $client = $this->getConnectedClient($input, $output);
         $client->on('error', $this->expectCallableOnce());
@@ -169,7 +169,7 @@ class ClientTest extends TestCase
         $input->emit('error', array($e));
     }
 
-    private function getConnectedClient(InputStream $input, OutputStream $output)
+    private function getConnectedClient(InputStreamInterface $input, OutputStreamInterface $output)
     {
         $client = new Client($input, $output, array('vhost' => 'localhost'));
         $input->emit('frame', array(new Frame('CONNECTED')));

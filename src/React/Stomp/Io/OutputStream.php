@@ -3,6 +3,7 @@
 namespace React\Stomp\Io;
 
 use Evenement\EventEmitter;
+use React\EventLoop\LoopInterface;
 use React\Stomp\Protocol\Frame;
 use React\Stream\ReadableStreamInterface;
 use React\Stream\WritableStreamInterface;
@@ -14,9 +15,16 @@ use React\Stream\Util;
 
 class OutputStream extends EventEmitter implements OutputStreamInterface, ReadableStreamInterface
 {
+    private $loop;
+
     private $readable = true;
     private $paused = false;
     private $bufferedFrames = array();
+
+    public function __construct(LoopInterface $loop)
+    {
+        $this->loop = $loop;
+    }
 
     public function sendFrame(Frame $frame)
     {
@@ -43,8 +51,21 @@ class OutputStream extends EventEmitter implements OutputStreamInterface, Readab
     {
         $this->paused = false;
 
+        $this->loop->addTimer(0.001, array($this, 'sendBufferedFrames'));
+    }
+
+    public function sendBufferedFrames()
+    {
+        if ($this->paused) {
+            return;
+        }
+
         while ($frame = array_shift($this->bufferedFrames)) {
             $this->sendFrame($frame);
+
+            if ($this->paused) {
+                return;
+            }
         }
     }
 

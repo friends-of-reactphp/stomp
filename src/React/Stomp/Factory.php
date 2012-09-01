@@ -32,7 +32,7 @@ class Factory
         $input = new InputStream($parser);
         $conn->pipe($input);
 
-        $output = new OutputStream();
+        $output = new OutputStream($this->loop);
         $output->pipe($conn);
 
         $conn->on('error', function ($e) use ($input) {
