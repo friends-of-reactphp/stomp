@@ -10,13 +10,16 @@ $client->on('ready', function () use ($loop, $client) {
     $prevMessageCount = 0;
     $messageCount = 0;
 
-    $client->subscribe('/topic/foo', function ($frame) use (&$messageCount) {
-        $messageCount++;
+    $loop->addPeriodicTimer(1, function () use ($client, &$messageCount) {
+        for ($i = 0; $i < 2000; $i++) {
+            $client->send('/topic/foo', 'le message');
+            $messageCount++;
+        }
     });
 
     $loop->addPeriodicTimer(1, function () use (&$prevMessageCount, &$messageCount) {
         $diff = $messageCount - $prevMessageCount;
-        echo "Received this second: $diff\n";
+        echo "Sent this second: $diff\n";
         $prevMessageCount = $messageCount;
     });
 });
