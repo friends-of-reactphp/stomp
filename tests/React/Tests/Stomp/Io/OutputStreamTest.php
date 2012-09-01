@@ -16,7 +16,7 @@ class OutputStreamTest extends TestCase
             ->expects($this->any())
             ->method('addTimer')
             ->will($this->returnCallback(function ($seconds, $callback) {
-                $callback();
+                call_user_func($callback);
             }));
     }
 
