@@ -2,7 +2,7 @@
 
 STOMP bindings for React.
 
-[![Build Status](https://secure.travis-ci.org/react-php/stomp.png?branch=master)](http://travis-ci.org/react-php/stomp)
+[![Build Status](https://secure.travis-ci.org/reactphp/stomp.png?branch=master)](http://travis-ci.org/react-php/stomp)
 
 ## Install
 
