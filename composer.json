@@ -10,5 +10,10 @@
     },
     "autoload": {
         "psr-0": { "React\\Stomp": "src" }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "0.1-dev"
+        }
     }
 }

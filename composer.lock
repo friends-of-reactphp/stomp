@@ -1,5 +1,5 @@
 {
-    "hash": "8ada7c49aabd138990ee1ea021bf2600",
+    "hash": "b945fc33845047110dc9f80e529aa676",
     "packages": [
         {
             "name": "evenement/evenement",
@@ -254,9 +254,7 @@
             "homepage": "http://symfony.com"
         }
     ],
-    "packages-dev": [
-
-    ],
+    "packages-dev": null,
     "aliases": [
 
     ],

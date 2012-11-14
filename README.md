@@ -11,7 +11,7 @@ The recommended way to install react/stomp is [through composer](http://getcompo
 ```JSON
 {
     "require": {
-        "react/stomp": "dev-master"
+        "react/stomp": "0.1.*"
     }
 }
 ```
