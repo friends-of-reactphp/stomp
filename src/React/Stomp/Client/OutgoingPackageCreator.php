@@ -41,6 +41,7 @@ class OutgoingPackageCreator
     {
         $headers['id'] = $this->state->subscriptions->add($destination, $ack);
         $headers['destination'] = $destination;
+        $headers['ack'] = $ack;
         return new Frame('SUBSCRIBE', $headers);
     }
 

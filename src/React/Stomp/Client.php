@@ -57,7 +57,7 @@ class Client extends EventEmitter
 
     public function subscribe($destination, $callback, $ack = 'auto', array $headers = array())
     {
-        $frame = $this->packageCreator->subscribe($destination, $headers);
+        $frame = $this->packageCreator->subscribe($destination, $ack, $headers);
         $this->output->sendFrame($frame);
 
         $subscriptionId = $frame->getHeader('id');
