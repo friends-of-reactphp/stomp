@@ -193,6 +193,74 @@ class ClientTest extends TestCase
     }
 
     /** @test */
+    public function shouldAck()
+    {
+        $input = $this->createInputStreamMock();
+
+        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output
+            ->expects($this->at(1))
+            ->method('sendFrame')
+            ->with($this->frameIsEqual(
+                new Frame('ACK', array('subscription' => 12345, 'message-id' => 54321))
+            ));
+
+        $client = $this->getConnectedClient($input, $output);
+        $client->ack(12345, 54321);
+    }
+
+    /** @test */
+    public function shouldAckWithCustomHeaders()
+    {
+        $input = $this->createInputStreamMock();
+
+        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output
+            ->expects($this->at(1))
+            ->method('sendFrame')
+            ->with($this->frameIsEqual(
+                new Frame('ACK', array('foo' => 'bar', 'subscription' => 12345, 'message-id' => 54321))
+            ));
+
+        $client = $this->getConnectedClient($input, $output);
+        $client->ack(12345, 54321, array('foo' => 'bar'));
+    }
+
+    /** @test */
+    public function shouldNack()
+    {
+        $input = $this->createInputStreamMock();
+
+        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output
+            ->expects($this->at(1))
+            ->method('sendFrame')
+            ->with($this->frameIsEqual(
+                new Frame('NACK', array('subscription' => 12345, 'message-id' => 54321))
+            ));
+
+        $client = $this->getConnectedClient($input, $output);
+        $client->nack(12345, 54321);
+    }
+
+    /** @test */
+    public function shouldNackWithCustomHeaders()
+    {
+        $input = $this->createInputStreamMock();
+
+        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output
+            ->expects($this->at(1))
+            ->method('sendFrame')
+            ->with($this->frameIsEqual(
+                new Frame('NACK', array('foo' => 'bar', 'subscription' => 12345, 'message-id' => 54321))
+            ));
+
+        $client = $this->getConnectedClient($input, $output);
+        $client->nack(12345, 54321, array('foo' => 'bar'));
+    }
+
+    /** @test */
     public function disconnectShouldGracefullyDisconnect()
     {
         $input = $this->createInputStreamMock();

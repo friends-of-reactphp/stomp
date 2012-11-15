@@ -74,6 +74,18 @@ class Client extends EventEmitter
         unset($this->subscriptions[$subscriptionId]);
     }
 
+    public function ack($subscriptionId, $messageId, array $headers = array())
+    {
+        $frame = $this->packageCreator->ack($subscriptionId, $messageId, $headers);
+        $this->output->sendFrame($frame);
+    }
+
+    public function nack($subscriptionId, $messageId, array $headers = array())
+    {
+        $frame = $this->packageCreator->nack($subscriptionId, $messageId, $headers);
+        $this->output->sendFrame($frame);
+    }
+
     public function disconnect()
     {
         $receipt = $this->generateReceiptId();
