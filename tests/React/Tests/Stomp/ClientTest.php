@@ -63,6 +63,89 @@ class ClientTest extends TestCase
         $client->send('/foo', 'hello');
     }
 
+    /**
+     * @test
+     * @dataProvider getAvailableAckMethods
+     */
+    public function subscribeMustIncludeAValidAckMethod($ack)
+    {
+        $callback = $this->createCallableMock();
+
+        $input = $this->createInputStreamMock();
+        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+
+        $output
+            ->expects($this->at(1))
+            ->method('sendFrame')
+            ->with($this->frameIsEqual(
+                new Frame('SUBSCRIBE', array('id' => 0, 'destination' => '/foo', 'ack' => $ack))
+            ));
+
+        $client = $this->getConnectedClient($input, $output);
+        $client->subscribe('/foo', $callback, $ack);
+    }
+
+    public function getAvailableAckMethods()
+    {
+        return array(
+            array('auto'),
+            array('client'),
+            array('client-individual'),
+        );
+    }
+
+    /** @test */
+    public function subscribeHasUniqueIdHeader()
+    {
+        $callback = $this->createCallableMock();
+
+        $input = $this->createInputStreamMock();
+        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+
+        $firstId = $secondId = null;
+
+        $output
+            ->expects($this->at(1))
+            ->method('sendFrame')
+            ->will($this->returnCallback(function($frame) use (&$firstId) {
+                $firstId = $frame->getHeader('id');
+            }));
+
+        $output
+            ->expects($this->at(2))
+            ->method('sendFrame')
+            ->will($this->returnCallback(function($frame) use (&$secondId) {
+                $secondId = $frame->getHeader('id');
+            }));
+
+        $client = $this->getConnectedClient($input, $output);
+        $client->subscribe('/foo', $callback);
+        $client->subscribe('/bar', $callback);
+
+        $this->assertNotNull($firstId);
+        $this->assertNotNull($secondId);
+        $this->assertNotEquals($firstId, $secondId);
+    }
+
+    /** @test */
+    public function subscribeCanEmbeddCustomHeader()
+    {
+        $callback = $this->createCallableMock();
+
+        $input = $this->createInputStreamMock();
+        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+
+        $output
+            ->expects($this->at(1))
+            ->method('sendFrame')
+            ->with($this->frameIsEqual(
+                new Frame('SUBSCRIBE', array('foo' => 'bar', 'id' => 0, 'destination' => '/foo', 'ack' => 'auto'))
+            ));
+
+        $client = $this->getConnectedClient($input, $output);
+        $client->subscribe('/foo', $callback, 'auto', array('foo' => 'bar'));
+    }
+
     /** @test */
     public function messagesShouldGetRoutedToSubscriptions()
     {
