@@ -44,7 +44,6 @@ $loop->run();
 
 * Support nul bytes in frame body
 * Heart-beating
-* Usable API for ack/nack
 * Transactions
 * Streaming frame bodies (using stream API)
 
