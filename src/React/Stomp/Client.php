@@ -18,6 +18,7 @@ use React\Stomp\Protocol\Frame;
 // Events: ready, error
 class Client extends EventEmitter
 {
+    private $acknowledgements;
     private $parser;
     private $packageProcessor;
     private $packageCreator;
@@ -59,6 +60,8 @@ class Client extends EventEmitter
         $this->output->sendFrame($frame);
 
         $subscriptionId = $frame->getHeader('id');
+
+        $this->acknowledgements[$subscriptionId] = $ack;
         $this->subscriptions[$subscriptionId] = $callback;
 
         return $subscriptionId;
@@ -69,6 +72,7 @@ class Client extends EventEmitter
         $frame = $this->packageCreator->unsubscribe($subscriptionId, $headers);
         $this->output->sendFrame($frame);
 
+        unset($this->acknowledgements[$subscriptionId]);
         unset($this->subscriptions[$subscriptionId]);
     }
 
@@ -144,7 +148,15 @@ class Client extends EventEmitter
         }
 
         $callback = $this->subscriptions[$subscriptionId];
-        call_user_func($callback, $frame);
+
+        if ('auto' !== $this->acknowledgements[$subscriptionId]) {
+            $resolver = new AckResolver($this, $subscriptionId, $frame->getHeader('message-id'));
+            $parameters = array($frame, $resolver);
+        } else {
+            $parameters = array($frame);
+        }
+
+        call_user_func_array($callback, $parameters);
     }
 
     public function generateReceiptId()
