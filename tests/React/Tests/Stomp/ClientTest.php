@@ -117,7 +117,7 @@ class ClientTest extends TestCase
     }
 
     /** @test */
-    public function subscribeCanEmbeddCustomHeader()
+    public function subscribeCanEmbedCustomHeader()
     {
         $callback = $this->createCallableMock();
 
