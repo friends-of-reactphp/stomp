@@ -54,7 +54,7 @@ class OutgoingPackageCreatorTest extends \PHPUnit_Framework_TestCase
     /** @test */
     public function subscribeShouldEmitSubscribeFrame()
     {
-        $expectedFrame = new Frame('SUBSCRIBE', array('id' => 0, 'destination' => '/queue/a'));
+        $expectedFrame = new Frame('SUBSCRIBE', array('id' => 0, 'destination' => '/queue/a', 'ack' => 'auto'));
 
         $state = new State();
         $packageCreator = new OutgoingPackageCreator($state);
@@ -67,15 +67,14 @@ class OutgoingPackageCreatorTest extends \PHPUnit_Framework_TestCase
     /** @test */
     public function subscribeShouldIncrementId()
     {
-
         $state = new State();
         $packageCreator = new OutgoingPackageCreator($state);
 
-        $expectedFrame = new Frame('SUBSCRIBE', array('id' => 0, 'destination' => '/queue/a'));
+        $expectedFrame = new Frame('SUBSCRIBE', array('id' => 0, 'destination' => '/queue/a', 'ack' => 'auto'));
         $frame = $packageCreator->subscribe('/queue/a');
         $this->assertFrameEquals($expectedFrame, $frame);
 
-        $expectedFrame = new Frame('SUBSCRIBE', array('id' => 1, 'destination' => '/queue/a'));
+        $expectedFrame = new Frame('SUBSCRIBE', array('id' => 1, 'destination' => '/queue/a', 'ack' => 'auto'));
         $frame = $packageCreator->subscribe('/queue/a');
         $this->assertFrameEquals($expectedFrame, $frame);
     }
