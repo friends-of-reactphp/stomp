@@ -54,7 +54,20 @@ class Client extends EventEmitter
         $this->output->sendFrame($frame);
     }
 
-    public function subscribe($destination, $callback, $ack = 'auto', array $headers = array())
+    public function subscribe($destination, $callback, array $headers = array())
+    {
+        return $this->doSubscription($destination, $callback, 'auto', $headers);
+    }
+
+    public function subscribeWithAck($destination, $ack, $callback, array $headers = array())
+    {
+        if ('auto' === $ack) {
+            throw new \LogicException("ack 'auto' is not compatible with acknowledgeable subscription");
+        }
+        return $this->doSubscription($destination, $callback, $ack, $headers);
+    }
+
+    private function doSubscription($destination, $callback, $ack, array $headers)
     {
         $frame = $this->packageCreator->subscribe($destination, $ack, $headers);
         $this->output->sendFrame($frame);

@@ -42,25 +42,24 @@ $loop->run();
 
 ## Acknowledgement
 
-Messages are considered acknowledged as soon as they are sent by the server by
-default (ack header is set to 'auto').
+When subscribing with the `subscribe` method, messages are considered
+acknowledged as soon as they are sent by the server (ack header is set to 'auto').
 
-You can turn on manual acknowledgement by setting the header value as third
-argument at subscribe declaration
+You can subscribe with a manual acknowledgement by using `subscribeWithAck`
 (see http://stomp.github.com//stomp-specification-1.1.html#SUBSCRIBE for
-available values).
+available ack values).
 
-You will get a `React\Promise\DeferredResolver` as second argument to
+You will get a `React\Stomp\AckResolver` as second argument of the callback to
 acknowledge or not the message :
 
 ```php
-$client->subscribe('/topic/foo', function ($frame, $ackResolver) {
+$client->subscribeWithAck('/topic/foo', 'client', function ($frame, $ackResolver) {
     if ($problem) {
         $ackResolver->nack();
     } else {
         $ackResolver->ack();
     }
-}, 'client');
+});
 ```
 
 ## Todo

@@ -66,7 +66,7 @@ class ClientTest extends TestCase
      * @test
      * @dataProvider provideAvailableAckMethods
      */
-    public function subscribeMustIncludeAValidAckMethod($ack)
+    public function subscribeWithAckMustIncludeAValidAckMethod($ack)
     {
         $callback = $this->createCallableMock();
 
@@ -81,13 +81,12 @@ class ClientTest extends TestCase
             ));
 
         $client = $this->getConnectedClient($input, $output);
-        $client->subscribe('/foo', $callback, $ack);
+        $client->subscribeWithAck('/foo', $ack, $callback);
     }
 
     public function provideAvailableAckMethods()
     {
         return array(
-            array('auto'),
             array('client'),
             array('client-individual'),
         );
@@ -132,14 +131,29 @@ class ClientTest extends TestCase
             ));
 
         $client = $this->getConnectedClient($input, $output);
-        $client->subscribe('/foo', $callback, 'auto', array('foo' => 'bar'));
+        $client->subscribe('/foo', $callback, array('foo' => 'bar'));
     }
 
     /**
      * @test
-     * @dataProvider getAcknowledgeableAckModes
+     * @expectedException \LogicException
      */
-    public function subscribeCallbackHasAcknowledgementParameterIfAckIsNotAuto($ack)
+    public function subscribeWithHackDoesNotWorkWithAuto()
+    {
+        $callback = $this->createCallableMock();
+
+        $input = $this->createInputStreamMock();
+        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+
+        $client = $this->getConnectedClient($input, $output);
+        $client->subscribeWithAck('/foo', 'auto', $callback);
+    }
+
+    /**
+     * @test
+     * @dataProvider provideAcknowledgeableAckModes
+     */
+    public function subscribeWithHackCallbackHasAcknowledgementParameter($ack)
     {
         $capturedResolver = null;
 
@@ -155,7 +169,7 @@ class ClientTest extends TestCase
         $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
 
         $client = $this->getConnectedClient($input, $output);
-        $subscriptionId = $client->subscribe('/foo', $callback, $ack);
+        $subscriptionId = $client->subscribeWithAck('/foo', $ack, $callback);
 
         $responseFrame = new Frame(
             'MESSAGE',
@@ -167,7 +181,7 @@ class ClientTest extends TestCase
         $this->assertInstanceOf('React\Stomp\AckResolver', $capturedResolver);
     }
 
-    public function getAcknowledgeableAckModes()
+    public function provideAcknowledgeableAckModes()
     {
         return array(
             array('client'),
@@ -199,7 +213,7 @@ class ClientTest extends TestCase
             ));
 
         $client = $this->getConnectedClient($input, $output);
-        $subscriptionId = $client->subscribe('/foo', $callback, 'client');
+        $subscriptionId = $client->subscribeWithAck('/foo', 'client', $callback);
 
         $responseFrame = new Frame(
             'MESSAGE',
@@ -235,7 +249,7 @@ class ClientTest extends TestCase
             ));
 
         $client = $this->getConnectedClient($input, $output);
-        $subscriptionId = $client->subscribe('/foo', $callback, 'client');
+        $subscriptionId = $client->subscribeWithAck('/foo', 'client', $callback);
 
         $responseFrame = new Frame(
             'MESSAGE',
