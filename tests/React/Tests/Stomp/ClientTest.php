@@ -6,7 +6,6 @@ use React\Stomp\Client;
 use React\Stomp\Io\InputStreamInterface;
 use React\Stomp\Io\OutputStreamInterface;
 use React\Stomp\Protocol\Frame;
-use React\Tests\Stomp\Constraint\FrameIsEqual;
 
 class ClientTest extends TestCase
 {
@@ -102,29 +101,19 @@ class ClientTest extends TestCase
         $input = $this->createInputStreamMock();
         $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
 
-        $firstId = $secondId = null;
-
         $output
             ->expects($this->at(1))
             ->method('sendFrame')
-            ->will($this->returnCallback(function ($frame) use (&$firstId) {
-                $firstId = $frame->getHeader('id');
-            }));
+            ->with($this->frameHasHeader('id', 0));
 
         $output
             ->expects($this->at(2))
             ->method('sendFrame')
-            ->will($this->returnCallback(function ($frame) use (&$secondId) {
-                $secondId = $frame->getHeader('id');
-            }));
+            ->with($this->frameHasHeader('id', 1));
 
         $client = $this->getConnectedClient($input, $output);
         $client->subscribe('/foo', $callback);
         $client->subscribe('/bar', $callback);
-
-        $this->assertNotNull($firstId);
-        $this->assertNotNull($secondId);
-        $this->assertNotEquals($firstId, $secondId);
     }
 
     /** @test */

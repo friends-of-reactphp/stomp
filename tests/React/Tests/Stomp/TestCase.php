@@ -4,6 +4,7 @@ namespace React\Tests\Stomp;
 
 use React\Stomp\Protocol\Frame;
 use React\Tests\Stomp\Constraint\FrameIsEqual;
+use React\Tests\Stomp\Constraint\FrameHasHeader;
 
 class TestCase extends \PHPUnit_Framework_TestCase
 {
@@ -15,6 +16,11 @@ class TestCase extends \PHPUnit_Framework_TestCase
     protected function frameIsEqual(Frame $frame)
     {
         return new FrameIsEqual($frame);
+    }
+
+    protected function frameHasHeader($name, $value)
+    {
+        return new FrameHasHeader($name, $value);
     }
 
     protected function expectCallableOnce()
