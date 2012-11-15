@@ -107,14 +107,14 @@ class ClientTest extends TestCase
         $output
             ->expects($this->at(1))
             ->method('sendFrame')
-            ->will($this->returnCallback(function($frame) use (&$firstId) {
+            ->will($this->returnCallback(function ($frame) use (&$firstId) {
                 $firstId = $frame->getHeader('id');
             }));
 
         $output
             ->expects($this->at(2))
             ->method('sendFrame')
-            ->will($this->returnCallback(function($frame) use (&$secondId) {
+            ->will($this->returnCallback(function ($frame) use (&$secondId) {
                 $secondId = $frame->getHeader('id');
             }));
 
