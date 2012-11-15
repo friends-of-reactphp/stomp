@@ -3,7 +3,6 @@
 namespace React\Stomp;
 
 use Evenement\EventEmitter;
-use React\EventLoop\LoopInterface;
 use React\Stomp\Client\IncomingPackageProcessor;
 use React\Stomp\Client\OutgoingPackageCreator;
 use React\Stomp\Client\State;
@@ -15,7 +14,6 @@ use React\Stomp\Exception\ProcessingException;
 use React\Stomp\Io\InputStreamInterface;
 use React\Stomp\Io\OutputStreamInterface;
 use React\Stomp\Protocol\Frame;
-use React\Stomp\Protocol\Parser;
 
 // Events: ready, error
 class Client extends EventEmitter
