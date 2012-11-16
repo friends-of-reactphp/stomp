@@ -25,7 +25,7 @@ class ClientTest extends TestCase
     }
 
     /** @test */
-    public function connectShouldReturnPromiseFrame()
+    public function connectShouldReturnPromise()
     {
         $input = $this->createInputStreamMock();
 
@@ -40,6 +40,51 @@ class ClientTest extends TestCase
 
         $this->assertInstanceOf('React\Promise\PromiseInterface', $promise);
         $promise->then($this->expectCallableNever());
+    }
+
+    /** @test */
+    public function connectTwiceShouldReturnTheSamePromise()
+    {
+        $input = $this->createInputStreamMock();
+
+        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output
+            ->expects($this->once())
+            ->method('sendFrame')
+            ->with($this->frameIsEqual(new Frame('CONNECT', array('accept-version' => '1.1', 'host' => 'localhost'))));
+
+        $client = new Client($input, $output, array('vhost' => 'localhost'));
+        $promise1 = $client->connect();
+        $promise2 = $client->connect();
+
+        $this->assertInstanceOf('React\Promise\PromiseInterface', $promise1);
+        $this->assertInstanceOf('React\Promise\PromiseInterface', $promise2);
+        $this->assertSame($promise1, $promise2);
+    }
+
+    /** @test */
+    public function disconnectThenConnectShouldReturnNewPromise()
+    {
+        $input = $this->createInputStreamMock();
+
+        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output
+            ->expects($this->at(0))
+            ->method('sendFrame')
+            ->with($this->frameIsEqual(new Frame('CONNECT', array('accept-version' => '1.1', 'host' => 'localhost'))));
+        $output
+            ->expects($this->at(2))
+            ->method('sendFrame')
+            ->with($this->frameIsEqual(new Frame('CONNECT', array('accept-version' => '1.1', 'host' => 'localhost'))));
+
+        $client = new Client($input, $output, array('vhost' => 'localhost'));
+        $promise1 = $client->connect();
+        $client->disconnect();
+        $promise2 = $client->connect();
+
+        $this->assertInstanceOf('React\Promise\PromiseInterface', $promise1);
+        $this->assertInstanceOf('React\Promise\PromiseInterface', $promise2);
+        $this->assertNotSame($promise1, $promise2);
     }
 
     /** @test */

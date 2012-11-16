@@ -24,6 +24,7 @@ class Client extends EventEmitter
     private $subscriptions = array();
     private $acknowledgements = array();
     private $options = array();
+    private $connectDeferred;
 
     public function __construct(InputStreamInterface $input, OutputStreamInterface $output, array $options)
     {
@@ -45,8 +46,12 @@ class Client extends EventEmitter
 
     public function connect()
     {
-        $deferred = new Deferred();
-        $this->on('connect', array($deferred, 'resolve'));
+        if ($this->connectDeferred) {
+            return $this->connectDeferred->promise();
+        }
+
+        $this->connectDeferred = new Deferred();
+        $this->on('connect', array($this->connectDeferred, 'resolve'));
 
         $frame = $this->packageCreator->connect(
             $this->options['host'],
@@ -55,7 +60,7 @@ class Client extends EventEmitter
         );
         $this->output->sendFrame($frame);
 
-        return $deferred->promise();
+        return $this->connectDeferred->promise();
     }
 
     public function send($destination, $body, array $headers = array())
@@ -116,6 +121,8 @@ class Client extends EventEmitter
         $receipt = $this->generateReceiptId();
         $frame = $this->packageCreator->disconnect($receipt);
         $this->output->sendFrame($frame);
+
+        $this->connectDeferred = null;
     }
 
     public function handleFrameEvent(Frame $frame)
