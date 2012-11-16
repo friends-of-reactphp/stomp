@@ -2,7 +2,7 @@
 
 namespace React\Stomp\Client;
 
-use React\Stomp\Protocol\Frame;
+use React\Stomp\Protocol\FrameInterface;
 use React\Stomp\Client\Command\CloseCommand;
 use React\Stomp\Client\Command\ConnectionEstablishedCommand;
 use React\Stomp\Client\Command\NullCommand;
@@ -23,7 +23,7 @@ class IncomingPackageProcessor
      *
      * @return An array of commands to be executed by the caller.
      */
-    public function receiveFrame(Frame $frame)
+    public function receiveFrame(FrameInterface $frame)
     {
         if ('ERROR' === $frame->command) {
             throw new ServerErrorException($frame);

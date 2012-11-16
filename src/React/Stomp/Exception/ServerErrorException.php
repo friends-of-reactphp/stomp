@@ -2,13 +2,13 @@
 
 namespace React\Stomp\Exception;
 
-use React\Stomp\Protocol\Frame;
+use React\Stomp\Protocol\FrameInterface;
 
 class ServerErrorException extends ProcessingException
 {
     private $frame;
 
-    public function __construct(Frame $frame)
+    public function __construct(FrameInterface $frame)
     {
         parent::__construct(sprintf('%s (%s)', $frame->getHeader('message'), trim($frame->body)));
 

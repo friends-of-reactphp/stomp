@@ -2,10 +2,10 @@
 
 namespace React\Stomp\Io;
 
-use React\Stomp\Protocol\Frame;
+use React\Stomp\Protocol\FrameInterface;
 
 interface OutputStreamInterface
 {
-    public function sendFrame(Frame $frame);
+    public function sendFrame(FrameInterface $frame);
     public function close();
 }

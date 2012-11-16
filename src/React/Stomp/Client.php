@@ -15,6 +15,7 @@ use React\Stomp\Exception\ProcessingException;
 use React\Stomp\Io\InputStreamInterface;
 use React\Stomp\Io\OutputStreamInterface;
 use React\Stomp\Protocol\Frame;
+use React\Stomp\Protocol\FrameInterface;
 
 // Events: connect, error
 class Client extends EventEmitter
@@ -121,7 +122,7 @@ class Client extends EventEmitter
         $this->connectDeferred = null;
     }
 
-    public function handleFrameEvent(Frame $frame)
+    public function handleFrameEvent(FrameInterface $frame)
     {
         try {
             $this->processFrame($frame);
@@ -135,7 +136,7 @@ class Client extends EventEmitter
         $this->emit('error', array($e));
     }
 
-    public function processFrame(Frame $frame)
+    public function processFrame(FrameInterface $frame)
     {
         $command = $this->packageProcessor->receiveFrame($frame);
         $this->executeCommand($command);

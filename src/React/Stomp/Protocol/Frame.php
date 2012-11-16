@@ -2,7 +2,7 @@
 
 namespace React\Stomp\Protocol;
 
-class Frame
+class Frame implements FrameInterface
 {
     public $command;
     public $headers = array();
