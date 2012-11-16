@@ -3,6 +3,7 @@
 namespace React\Stomp;
 
 use Evenement\EventEmitter;
+use React\Promise\Deferred;
 use React\Stomp\Client\IncomingPackageProcessor;
 use React\Stomp\Client\OutgoingPackageCreator;
 use React\Stomp\Client\State;
@@ -15,13 +16,15 @@ use React\Stomp\Io\InputStreamInterface;
 use React\Stomp\Io\OutputStreamInterface;
 use React\Stomp\Protocol\Frame;
 
-// Events: ready, error
+// Events: connect, error
 class Client extends EventEmitter
 {
-    private $acknowledgements = array();
     private $packageProcessor;
     private $packageCreator;
     private $subscriptions = array();
+    private $acknowledgements = array();
+    private $options = array();
+    private $connectDeferred;
 
     public function __construct(InputStreamInterface $input, OutputStreamInterface $output, array $options)
     {
@@ -34,17 +37,26 @@ class Client extends EventEmitter
         $this->input->on('error', array($this, 'handleErrorEvent'));
         $this->output = $output;
 
-        $this->sendConnectFrame($options);
+        $this->options = $this->sanatizeOptions($options);
     }
 
-    public function sendConnectFrame($options)
+    public function connect()
     {
-        $host = isset($options['vhost']) ? $options['vhost'] : $options['host'];
-        $login = isset($options['login']) ? $options['login'] : null;
-        $passcode = isset($options['passcode']) ? $options['passcode'] : null;
+        if ($this->connectDeferred) {
+            return $this->connectDeferred->promise();
+        }
 
-        $frame = $this->packageCreator->connect($host, $login, $passcode);
+        $this->connectDeferred = new Deferred();
+        $this->on('connect', array($this->connectDeferred, 'resolve'));
+
+        $frame = $this->packageCreator->connect(
+            $this->options['host'],
+            $this->options['login'],
+            $this->options['passcode']
+        );
         $this->output->sendFrame($frame);
+
+        return $this->connectDeferred->promise();
     }
 
     public function send($destination, $body, array $headers = array())
@@ -105,6 +117,8 @@ class Client extends EventEmitter
         $receipt = $this->generateReceiptId();
         $frame = $this->packageCreator->disconnect($receipt);
         $this->output->sendFrame($frame);
+
+        $this->connectDeferred = null;
     }
 
     public function handleFrameEvent(Frame $frame)
@@ -140,7 +154,7 @@ class Client extends EventEmitter
         }
 
         if ($command instanceof ConnectionEstablishedCommand) {
-            $this->emit('ready');
+            $this->emit('connect', array($this));
             return;
         }
 
@@ -169,6 +183,19 @@ class Client extends EventEmitter
         }
 
         call_user_func_array($callback, $parameters);
+    }
+
+    private function sanatizeOptions($options)
+    {
+        if (!isset($options['host']) && !isset($options['vhost'])) {
+            throw new \InvalidArgumentException('Either host or vhost options must be provided.');
+        }
+
+        return array_merge(array(
+            'host'      => isset($options['vhost']) ? $options['vhost'] : $options['host'],
+            'login'     => null,
+            'passcode'  => null,
+        ), $options);
     }
 
     public function generateReceiptId()
