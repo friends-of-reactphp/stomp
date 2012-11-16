@@ -3,6 +3,7 @@
 namespace React\Stomp;
 
 use Evenement\EventEmitter;
+use React\Promise\Deferred;
 use React\Stomp\Client\IncomingPackageProcessor;
 use React\Stomp\Client\OutgoingPackageCreator;
 use React\Stomp\Client\State;
@@ -15,13 +16,14 @@ use React\Stomp\Io\InputStreamInterface;
 use React\Stomp\Io\OutputStreamInterface;
 use React\Stomp\Protocol\Frame;
 
-// Events: ready, error
+// Events: connect, error
 class Client extends EventEmitter
 {
-    private $acknowledgements = array();
     private $packageProcessor;
     private $packageCreator;
     private $subscriptions = array();
+    private $acknowledgements = array();
+    private $options = array();
 
     public function __construct(InputStreamInterface $input, OutputStreamInterface $output, array $options)
     {
@@ -34,17 +36,26 @@ class Client extends EventEmitter
         $this->input->on('error', array($this, 'handleErrorEvent'));
         $this->output = $output;
 
-        $this->sendConnectFrame($options);
+        $this->options = array_merge(array(
+            'host'      => isset($options['vhost']) ? $options['vhost'] : $options['host'],
+            'login'     => null,
+            'passcode'  => null,
+        ), $this->options);
     }
 
-    public function sendConnectFrame($options)
+    public function connect()
     {
-        $host = isset($options['vhost']) ? $options['vhost'] : $options['host'];
-        $login = isset($options['login']) ? $options['login'] : null;
-        $passcode = isset($options['passcode']) ? $options['passcode'] : null;
+        $deferred = new Deferred();
+        $this->on('connect', array($deferred, 'resolve'));
 
-        $frame = $this->packageCreator->connect($host, $login, $passcode);
+        $frame = $this->packageCreator->connect(
+            $this->options['host'],
+            $this->options['login'],
+            $this->options['passcode']
+        );
         $this->output->sendFrame($frame);
+
+        return $deferred->promise();
     }
 
     public function send($destination, $body, array $headers = array())
@@ -140,7 +151,7 @@ class Client extends EventEmitter
         }
 
         if ($command instanceof ConnectionEstablishedCommand) {
-            $this->emit('ready');
+            $this->emit('connect', array($this));
             return;
         }
 

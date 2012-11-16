@@ -10,7 +10,7 @@ use React\Stomp\Protocol\Frame;
 class ClientTest extends TestCase
 {
     /** @test */
-    public function itShouldSendConnectFrameOnCreation()
+    public function connectShouldSendConnectFrame()
     {
         $input = $this->createInputStreamMock();
 
@@ -21,16 +21,52 @@ class ClientTest extends TestCase
             ->with($this->frameIsEqual(new Frame('CONNECT', array('accept-version' => '1.1', 'host' => 'localhost'))));
 
         $client = new Client($input, $output, array('vhost' => 'localhost'));
+        $client->connect();
     }
 
     /** @test */
-    public function itShouldEmitReadyAfterHandshake()
+    public function connectShouldReturnPromiseFrame()
+    {
+        $input = $this->createInputStreamMock();
+
+        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output
+            ->expects($this->once())
+            ->method('sendFrame')
+            ->with($this->frameIsEqual(new Frame('CONNECT', array('accept-version' => '1.1', 'host' => 'localhost'))));
+
+        $client = new Client($input, $output, array('vhost' => 'localhost'));
+        $promise = $client->connect();
+
+        $this->assertInstanceOf('React\Promise\PromiseInterface', $promise);
+        $promise->then($this->expectCallableNever());
+    }
+
+    /** @test */
+    public function itShouldEmitConnectAfterHandshake()
     {
         $input = $this->createInputStreamMock();
         $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
 
         $client = new Client($input, $output, array('vhost' => 'localhost'));
-        $client->on('ready', $this->expectCallableOnce());
+        $client->on('connect', $this->expectCallableOnce());
+        $client->connect();
+
+        $frame = new Frame('CONNECTED', array('session' => '1234', 'server' => 'React/alpha'));
+        $input->emit('frame', array($frame));
+    }
+
+    /** @test */
+    public function itShouldResolveConnectPromiseAfterHandshake()
+    {
+        $input = $this->createInputStreamMock();
+        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+
+        $client = new Client($input, $output, array('vhost' => 'localhost'));
+        $client->on('connect', $this->expectCallableOnce());
+        $client
+            ->connect()
+            ->then($this->expectCallableOnce());
 
         $frame = new Frame('CONNECTED', array('session' => '1234', 'server' => 'React/alpha'));
         $input->emit('frame', array($frame));
@@ -438,6 +474,7 @@ class ClientTest extends TestCase
     private function getConnectedClient(InputStreamInterface $input, OutputStreamInterface $output)
     {
         $client = new Client($input, $output, array('vhost' => 'localhost'));
+        $client->connect();
         $input->emit('frame', array(new Frame('CONNECTED')));
 
         return $client;
