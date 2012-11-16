@@ -40,11 +40,32 @@ $client->on('ready', function () use ($loop, $client) {
 $loop->run();
 ```
 
+## Acknowledgement
+
+When subscribing with the `subscribe` method, messages are considered
+acknowledged as soon as they are sent by the server (ack header is set to 'auto').
+
+You can subscribe with a manual acknowledgement by using `subscribeWithAck`
+(see http://stomp.github.com//stomp-specification-1.1.html#SUBSCRIBE for
+available ack values).
+
+You will get a `React\Stomp\AckResolver` as second argument of the callback to
+acknowledge or not the message :
+
+```php
+$client->subscribeWithAck('/topic/foo', 'client', function ($frame, $ackResolver) {
+    if ($problem) {
+        $ackResolver->nack();
+    } else {
+        $ackResolver->ack();
+    }
+});
+```
+
 ## Todo
 
 * Support nul bytes in frame body
 * Heart-beating
-* Usable API for ack/nack
 * Transactions
 * Streaming frame bodies (using stream API)
 

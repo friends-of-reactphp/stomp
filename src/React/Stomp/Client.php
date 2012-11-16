@@ -3,7 +3,6 @@
 namespace React\Stomp;
 
 use Evenement\EventEmitter;
-use React\EventLoop\LoopInterface;
 use React\Stomp\Client\IncomingPackageProcessor;
 use React\Stomp\Client\OutgoingPackageCreator;
 use React\Stomp\Client\State;
@@ -15,12 +14,11 @@ use React\Stomp\Exception\ProcessingException;
 use React\Stomp\Io\InputStreamInterface;
 use React\Stomp\Io\OutputStreamInterface;
 use React\Stomp\Protocol\Frame;
-use React\Stomp\Protocol\Parser;
 
 // Events: ready, error
 class Client extends EventEmitter
 {
-    private $parser;
+    private $acknowledgements = array();
     private $packageProcessor;
     private $packageCreator;
     private $subscriptions = array();
@@ -55,12 +53,27 @@ class Client extends EventEmitter
         $this->output->sendFrame($frame);
     }
 
-    public function subscribe($destination, $callback, $ack = 'auto', array $headers = array())
+    public function subscribe($destination, $callback, array $headers = array())
+    {
+        return $this->doSubscription($destination, $callback, 'auto', $headers);
+    }
+
+    public function subscribeWithAck($destination, $ack, $callback, array $headers = array())
+    {
+        if ('auto' === $ack) {
+            throw new \LogicException("ack 'auto' is not compatible with acknowledgeable subscription");
+        }
+        return $this->doSubscription($destination, $callback, $ack, $headers);
+    }
+
+    private function doSubscription($destination, $callback, $ack, array $headers)
     {
         $frame = $this->packageCreator->subscribe($destination, $ack, $headers);
         $this->output->sendFrame($frame);
 
         $subscriptionId = $frame->getHeader('id');
+
+        $this->acknowledgements[$subscriptionId] = $ack;
         $this->subscriptions[$subscriptionId] = $callback;
 
         return $subscriptionId;
@@ -71,7 +84,20 @@ class Client extends EventEmitter
         $frame = $this->packageCreator->unsubscribe($subscriptionId, $headers);
         $this->output->sendFrame($frame);
 
+        unset($this->acknowledgements[$subscriptionId]);
         unset($this->subscriptions[$subscriptionId]);
+    }
+
+    public function ack($subscriptionId, $messageId, array $headers = array())
+    {
+        $frame = $this->packageCreator->ack($subscriptionId, $messageId, $headers);
+        $this->output->sendFrame($frame);
+    }
+
+    public function nack($subscriptionId, $messageId, array $headers = array())
+    {
+        $frame = $this->packageCreator->nack($subscriptionId, $messageId, $headers);
+        $this->output->sendFrame($frame);
     }
 
     public function disconnect()
@@ -134,7 +160,15 @@ class Client extends EventEmitter
         }
 
         $callback = $this->subscriptions[$subscriptionId];
-        call_user_func($callback, $frame);
+
+        if ('auto' !== $this->acknowledgements[$subscriptionId]) {
+            $resolver = new AckResolver($this, $subscriptionId, $frame->getHeader('message-id'));
+            $parameters = array($frame, $resolver);
+        } else {
+            $parameters = array($frame);
+        }
+
+        call_user_func_array($callback, $parameters);
     }
 
     public function generateReceiptId()
