@@ -2,6 +2,7 @@
 
 namespace React\Tests\Stomp\Protocol;
 
+use React\Stomp\Protocol\HeartbeatFrame;
 use React\Stomp\Protocol\Parser;
 use React\Stomp\Protocol\InvalidFrameException;
 
@@ -26,6 +27,48 @@ Body\x00";
             $data,
             $frames
         );
+    }
+
+    /** @test */
+    public function itShouldParseMultipleFrame()
+    {
+        $data = "\x0AMESSAGE
+header1:value1
+header2:value2
+
+Body\x00";
+
+        $parser = new Parser();
+        list($frames, $data) = $parser->parse($data);
+
+        $this->assertCount(2, $frames);
+        $this->assertEquals('', $data);
+
+        $this->assertInstanceOf('React\Stomp\Protocol\HeartbeatFrame', $frames[0]);
+        $this->assertInstanceOf('React\Stomp\Protocol\Frame', $frames[1]);
+    }
+
+    /** @test */
+    public function itShouldParseAnHeartbeatFrame()
+    {
+        $data = "\x0A";
+
+        $parser = new Parser();
+        list($frames, $data) = $parser->parse($data);
+
+        $this->assertHasSingleHeartbeatFrame($frames, $data);
+    }
+
+    /** @test */
+    public function itShouldParseMultipleHeartbeatFrame()
+    {
+        $data = "\x0A\x0A";
+
+        $parser = new Parser();
+        list($frames, $data) = $parser->parse($data);
+
+        $this->assertEquals(array(new HeartbeatFrame(),new HeartbeatFrame()), $frames);
+        $this->assertEquals('', $data);
     }
 
     /** @test */
@@ -186,6 +229,13 @@ foo:baz
             $data,
             $frames
         );
+    }
+
+    public function assertHasSingleHeartbeatFrame($frames, $data)
+    {
+        $this->assertCount(1, $frames);
+        $this->assertInstanceOf('React\Stomp\Protocol\HeartbeatFrame', $frames[0]);
+        $this->assertSame('', $data);
     }
 
     public function assertHasSingleFrame($command, $headers, $body, $data, $frames)

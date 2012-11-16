@@ -3,6 +3,7 @@
 namespace React\Stomp\Client;
 
 use React\Stomp\Protocol\FrameInterface;
+use React\Stomp\Protocol\HeartbeatFrame;
 use React\Stomp\Client\Command\CloseCommand;
 use React\Stomp\Client\Command\ConnectionEstablishedCommand;
 use React\Stomp\Client\Command\NullCommand;
@@ -25,6 +26,10 @@ class IncomingPackageProcessor
      */
     public function receiveFrame(FrameInterface $frame)
     {
+        if ($frame instanceof HeartbeatFrame) {
+            return new NullCommand();
+        }
+
         if ('ERROR' === $frame->command) {
             throw new ServerErrorException($frame);
         }
