@@ -66,6 +66,7 @@ $client->subscribeWithAck('/topic/foo', 'client', function ($frame, $ackResolver
 
 * Support nul bytes in frame body
 * Heart-beating
+* Consuming ACKs
 * Transactions
 * Streaming frame bodies (using stream API)
 
