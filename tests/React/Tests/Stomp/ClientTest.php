@@ -28,12 +28,7 @@ class ClientTest extends TestCase
     public function connectShouldReturnPromise()
     {
         $input = $this->createInputStreamMock();
-
         $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
-        $output
-            ->expects($this->once())
-            ->method('sendFrame')
-            ->with($this->frameIsEqual(new Frame('CONNECT', array('accept-version' => '1.1', 'host' => 'localhost'))));
 
         $client = new Client($input, $output, array('vhost' => 'localhost'));
         $promise = $client->connect();
@@ -42,16 +37,22 @@ class ClientTest extends TestCase
         $promise->then($this->expectCallableNever());
     }
 
+    /**
+     * @test
+     * @expectedException InvalidArgumentException
+     */
+    public function connectShouldRejectMissingHostOrVhost()
+    {
+        $input = $this->createInputStreamMock();
+        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $client = new Client($input, $output, array());
+    }
+
     /** @test */
     public function connectTwiceShouldReturnTheSamePromise()
     {
         $input = $this->createInputStreamMock();
-
         $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
-        $output
-            ->expects($this->once())
-            ->method('sendFrame')
-            ->with($this->frameIsEqual(new Frame('CONNECT', array('accept-version' => '1.1', 'host' => 'localhost'))));
 
         $client = new Client($input, $output, array('vhost' => 'localhost'));
         $promise1 = $client->connect();
@@ -67,15 +68,17 @@ class ClientTest extends TestCase
     {
         $input = $this->createInputStreamMock();
 
+        $connectFrame = new Frame('CONNECT', array('accept-version' => '1.1', 'host' => 'localhost'));
+
         $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
         $output
             ->expects($this->at(0))
             ->method('sendFrame')
-            ->with($this->frameIsEqual(new Frame('CONNECT', array('accept-version' => '1.1', 'host' => 'localhost'))));
+            ->with($this->frameIsEqual($connectFrame));
         $output
             ->expects($this->at(2))
             ->method('sendFrame')
-            ->with($this->frameIsEqual(new Frame('CONNECT', array('accept-version' => '1.1', 'host' => 'localhost'))));
+            ->with($this->frameIsEqual($connectFrame));
 
         $client = new Client($input, $output, array('vhost' => 'localhost'));
         $promise1 = $client->connect();

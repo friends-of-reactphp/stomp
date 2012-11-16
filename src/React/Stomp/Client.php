@@ -37,11 +37,7 @@ class Client extends EventEmitter
         $this->input->on('error', array($this, 'handleErrorEvent'));
         $this->output = $output;
 
-        $this->options = array_merge(array(
-            'host'      => isset($options['vhost']) ? $options['vhost'] : $options['host'],
-            'login'     => null,
-            'passcode'  => null,
-        ), $this->options);
+        $this->options = $this->sanatizeOptions($options);
     }
 
     public function connect()
@@ -187,6 +183,19 @@ class Client extends EventEmitter
         }
 
         call_user_func_array($callback, $parameters);
+    }
+
+    private function sanatizeOptions($options)
+    {
+        if (!isset($options['host']) && !isset($options['vhost'])) {
+            throw new \InvalidArgumentException('Either host or vhost options must be provided.');
+        }
+
+        return array_merge(array(
+            'host'      => isset($options['vhost']) ? $options['vhost'] : $options['host'],
+            'login'     => null,
+            'passcode'  => null,
+        ), $options);
     }
 
     public function generateReceiptId()
