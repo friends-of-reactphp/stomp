@@ -15,9 +15,9 @@ class Frame implements FrameInterface
         $this->body = $body;
     }
 
-    public function getHeader($name)
+    public function getHeader($name, $defaultValue = null)
     {
-        return isset($this->headers[$name]) ? $this->headers[$name] : null;
+        return isset($this->headers[$name]) ? $this->headers[$name] : $defaultValue;
     }
 
     public function dump()
