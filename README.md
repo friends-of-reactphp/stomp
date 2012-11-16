@@ -42,6 +42,14 @@ $client
 $loop->run();
 ```
 
+## Options
+
+* `host`: Host to connect to, defaults to `127.0.0.1`.
+* `port`: Port to connect to, defaults to `61613` (rabbitmq's stomp plugin).
+* `vhost`: Virtual host, defaults to `/`.
+* `login`: Login user name, defaults to `guest`.
+* `passcode`: Login passcode, defaults to `guest`.
+
 ## Acknowledgement
 
 When subscribing with the `subscribe` method, messages are considered

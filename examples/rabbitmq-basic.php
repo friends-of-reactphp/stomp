@@ -4,7 +4,7 @@ require __DIR__.'/../vendor/autoload.php';
 
 $loop = React\EventLoop\Factory::create();
 $factory = new React\Stomp\Factory($loop);
-$client = $factory->createClient(array('vhost' => '/', 'login' => 'guest', 'passcode' => 'guest'));
+$client = $factory->createClient();
 
 $client
     ->connect()

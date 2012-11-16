@@ -11,8 +11,11 @@ use React\Socket\Connection;
 class Factory
 {
     private $defaultOptions = array(
-        'host' => '127.0.0.1',
-        'port' => 61613,
+        'host'      => '127.0.0.1',
+        'port'      => 61613,
+        'vhost'     => '/',
+        'login'     => 'guest',
+        'passcode'  => 'guest',
     );
 
     private $loop;
@@ -22,7 +25,7 @@ class Factory
         $this->loop = $loop;
     }
 
-    public function createClient($options)
+    public function createClient(array $options = array())
     {
         $options = array_merge($this->defaultOptions, $options);
 
