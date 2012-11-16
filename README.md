@@ -53,11 +53,12 @@ $loop->run();
 ## Acknowledgement
 
 When subscribing with the `subscribe` method, messages are considered
-acknowledged as soon as they are sent by the server (ack header is set to 'auto').
+acknowledged as soon as they are sent by the server (ack header is set to
+'auto').
 
 You can subscribe with a manual acknowledgement by using `subscribeWithAck`
-(see http://stomp.github.com//stomp-specification-1.1.html#SUBSCRIBE for
-available ack values).
+(see [SUBSCRIBE](http://stomp.github.com//stomp-specification-1.1.html#SUBSCRIBE)
+in the STOMP spec for available ack mode values).
 
 You will get a `React\Stomp\AckResolver` as second argument of the callback to
 acknowledge or not the message :
