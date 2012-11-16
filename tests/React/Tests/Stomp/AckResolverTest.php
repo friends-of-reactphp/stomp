@@ -46,7 +46,7 @@ class AckResolverTest extends TestCase
             ->expects($this->exactly(1))
             ->method('ack')
             ->will($this->returnCallback(function ($subId, $msgId, $headers)
-                use (&$capturedSubId, &$capturedMsgId, &$capturedHeaders) {
+                    use (&$capturedSubId, &$capturedMsgId, &$capturedHeaders) {
                 $capturedHeaders = $headers;
                 $capturedMsgId = $msgId;
                 $capturedSubId = $subId;
@@ -73,7 +73,7 @@ class AckResolverTest extends TestCase
             ->expects($this->exactly(1))
             ->method('nack')
             ->will($this->returnCallback(function ($subId, $msgId, $headers)
-                use (&$capturedSubId, &$capturedMsgId, &$capturedHeaders) {
+                    use (&$capturedSubId, &$capturedMsgId, &$capturedHeaders) {
                 $capturedHeaders = $headers;
                 $capturedMsgId = $msgId;
                 $capturedSubId = $subId;

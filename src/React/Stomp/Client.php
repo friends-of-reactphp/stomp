@@ -18,8 +18,7 @@ use React\Stomp\Protocol\Frame;
 // Events: ready, error
 class Client extends EventEmitter
 {
-    private $acknowledgements;
-    private $parser;
+    private $acknowledgements = array();
     private $packageProcessor;
     private $packageCreator;
     private $subscriptions = array();

@@ -138,7 +138,7 @@ class ClientTest extends TestCase
      * @test
      * @expectedException \LogicException
      */
-    public function subscribeWithHackDoesNotWorkWithAuto()
+    public function subscribeWithAckDoesNotWorkWithAutoAckMode()
     {
         $callback = $this->createCallableMock();
 
@@ -153,7 +153,7 @@ class ClientTest extends TestCase
      * @test
      * @dataProvider provideAcknowledgeableAckModes
      */
-    public function subscribeWithHackCallbackHasAcknowledgementParameter($ack)
+    public function subscribeWithAckCallbackShouldHaveAckResolverArgument($ack)
     {
         $capturedResolver = null;
 
@@ -190,7 +190,7 @@ class ClientTest extends TestCase
     }
 
     /** @test */
-    public function acknowledgeWithAckResolverParameter()
+    public function acknowledgeWithAckResolverArgumentShouldSendAckFrame()
     {
         $capturedResolver = null;
 
@@ -226,7 +226,7 @@ class ClientTest extends TestCase
     }
 
     /** @test */
-    public function negativeAcknowledgeWithAckResolverParameter()
+    public function negativeAcknowledgeWithAckResolverArgumentShouldSendNackFrame()
     {
         $capturedResolver = null;
 
@@ -319,7 +319,7 @@ class ClientTest extends TestCase
     }
 
     /** @test */
-    public function shouldAck()
+    public function ackShouldSendAckFrame()
     {
         $input = $this->createInputStreamMock();
 
@@ -336,7 +336,7 @@ class ClientTest extends TestCase
     }
 
     /** @test */
-    public function shouldAckWithCustomHeaders()
+    public function ackShouldSendAckFrameWithCustomHeaders()
     {
         $input = $this->createInputStreamMock();
 
@@ -353,7 +353,7 @@ class ClientTest extends TestCase
     }
 
     /** @test */
-    public function shouldNack()
+    public function nackShouldSendNackFrame()
     {
         $input = $this->createInputStreamMock();
 
@@ -370,7 +370,7 @@ class ClientTest extends TestCase
     }
 
     /** @test */
-    public function shouldNackWithCustomHeaders()
+    public function nackShouldSendNackFrameWithCustomHeaders()
     {
         $input = $this->createInputStreamMock();
 
