@@ -50,7 +50,7 @@ class Client extends EventEmitter
         $this->on('connect', array($this->connectDeferred, 'resolve'));
 
         $frame = $this->packageCreator->connect(
-            $this->options['host'],
+            $this->options['vhost'],
             $this->options['login'],
             $this->options['passcode']
         );
@@ -192,7 +192,7 @@ class Client extends EventEmitter
         }
 
         return array_merge(array(
-            'host'      => isset($options['vhost']) ? $options['vhost'] : $options['host'],
+            'vhost'     => isset($options['host']) ? $options['host'] : null,
             'login'     => null,
             'passcode'  => null,
         ), $options);
