@@ -64,9 +64,9 @@ class ClientTest extends TestCase
 
     /**
      * @test
-     * @dataProvider getAvailableAckMethods
+     * @dataProvider provideAvailableAckMethods
      */
-    public function subscribeMustIncludeAValidAckMethod($ack)
+    public function subscribeWithAckMustIncludeAValidAckMethod($ack)
     {
         $callback = $this->createCallableMock();
 
@@ -81,13 +81,12 @@ class ClientTest extends TestCase
             ));
 
         $client = $this->getConnectedClient($input, $output);
-        $client->subscribe('/foo', $callback, $ack);
+        $client->subscribeWithAck('/foo', $ack, $callback);
     }
 
-    public function getAvailableAckMethods()
+    public function provideAvailableAckMethods()
     {
         return array(
-            array('auto'),
             array('client'),
             array('client-individual'),
         );
@@ -132,7 +131,134 @@ class ClientTest extends TestCase
             ));
 
         $client = $this->getConnectedClient($input, $output);
-        $client->subscribe('/foo', $callback, 'auto', array('foo' => 'bar'));
+        $client->subscribe('/foo', $callback, array('foo' => 'bar'));
+    }
+
+    /**
+     * @test
+     * @expectedException \LogicException
+     */
+    public function subscribeWithAckDoesNotWorkWithAutoAckMode()
+    {
+        $callback = $this->createCallableMock();
+
+        $input = $this->createInputStreamMock();
+        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+
+        $client = $this->getConnectedClient($input, $output);
+        $client->subscribeWithAck('/foo', 'auto', $callback);
+    }
+
+    /**
+     * @test
+     * @dataProvider provideAcknowledgeableAckModes
+     */
+    public function subscribeWithAckCallbackShouldHaveAckResolverArgument($ack)
+    {
+        $capturedResolver = null;
+
+        $callback = $this->createCallableMock();
+        $callback
+            ->expects($this->exactly(1))
+            ->method('__invoke')
+            ->will($this->returnCallback(function ($frame, $resolver) use (&$capturedResolver) {
+                $capturedResolver = $resolver;
+            }));
+
+        $input = $this->createInputStreamMock();
+        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+
+        $client = $this->getConnectedClient($input, $output);
+        $subscriptionId = $client->subscribeWithAck('/foo', $ack, $callback);
+
+        $responseFrame = new Frame(
+            'MESSAGE',
+            array('subscription' => $subscriptionId, 'message-id' => 42, 'destination' => '/foo', 'content-type' => 'text/plain'),
+            'this is a published message'
+        );
+        $input->emit('frame', array($responseFrame));
+
+        $this->assertInstanceOf('React\Stomp\AckResolver', $capturedResolver);
+    }
+
+    public function provideAcknowledgeableAckModes()
+    {
+        return array(
+            array('client'),
+            array('client-individual'),
+        );
+    }
+
+    /** @test */
+    public function acknowledgeWithAckResolverArgumentShouldSendAckFrame()
+    {
+        $capturedResolver = null;
+
+        $callback = $this->createCallableMock();
+        $callback
+            ->expects($this->exactly(1))
+            ->method('__invoke')
+            ->will($this->returnCallback(function ($frame, $resolver) use (&$capturedResolver) {
+                $capturedResolver = $resolver;
+            }));
+
+        $input = $this->createInputStreamMock();
+        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+
+        $output
+            ->expects($this->at(2))
+            ->method('sendFrame')
+            ->with($this->frameIsEqual(
+                new Frame('ACK', array('subscription' => 0, 'message-id' => 54321))
+            ));
+
+        $client = $this->getConnectedClient($input, $output);
+        $subscriptionId = $client->subscribeWithAck('/foo', 'client', $callback);
+
+        $responseFrame = new Frame(
+            'MESSAGE',
+            array('subscription' => $subscriptionId, 'message-id' => 54321, 'destination' => '/foo', 'content-type' => 'text/plain'),
+            'this is a published message'
+        );
+        $input->emit('frame', array($responseFrame));
+
+        $capturedResolver->ack();
+    }
+
+    /** @test */
+    public function negativeAcknowledgeWithAckResolverArgumentShouldSendNackFrame()
+    {
+        $capturedResolver = null;
+
+        $callback = $this->createCallableMock();
+        $callback
+            ->expects($this->exactly(1))
+            ->method('__invoke')
+            ->will($this->returnCallback(function ($frame, $resolver) use (&$capturedResolver) {
+                $capturedResolver = $resolver;
+            }));
+
+        $input = $this->createInputStreamMock();
+        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+
+        $output
+            ->expects($this->at(2))
+            ->method('sendFrame')
+            ->with($this->frameIsEqual(
+                new Frame('NACK', array('subscription' => 0, 'message-id' => 54321))
+            ));
+
+        $client = $this->getConnectedClient($input, $output);
+        $subscriptionId = $client->subscribeWithAck('/foo', 'client', $callback);
+
+        $responseFrame = new Frame(
+            'MESSAGE',
+            array('subscription' => $subscriptionId, 'message-id' => 54321, 'destination' => '/foo', 'content-type' => 'text/plain'),
+            'this is a published message'
+        );
+        $input->emit('frame', array($responseFrame));
+
+        $capturedResolver->nack();
     }
 
     /** @test */
@@ -190,6 +316,74 @@ class ClientTest extends TestCase
             'this is a published message'
         );
         $input->emit('frame', array($responseFrame));
+    }
+
+    /** @test */
+    public function ackShouldSendAckFrame()
+    {
+        $input = $this->createInputStreamMock();
+
+        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output
+            ->expects($this->at(1))
+            ->method('sendFrame')
+            ->with($this->frameIsEqual(
+                new Frame('ACK', array('subscription' => 12345, 'message-id' => 54321))
+            ));
+
+        $client = $this->getConnectedClient($input, $output);
+        $client->ack(12345, 54321);
+    }
+
+    /** @test */
+    public function ackShouldSendAckFrameWithCustomHeaders()
+    {
+        $input = $this->createInputStreamMock();
+
+        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output
+            ->expects($this->at(1))
+            ->method('sendFrame')
+            ->with($this->frameIsEqual(
+                new Frame('ACK', array('foo' => 'bar', 'subscription' => 12345, 'message-id' => 54321))
+            ));
+
+        $client = $this->getConnectedClient($input, $output);
+        $client->ack(12345, 54321, array('foo' => 'bar'));
+    }
+
+    /** @test */
+    public function nackShouldSendNackFrame()
+    {
+        $input = $this->createInputStreamMock();
+
+        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output
+            ->expects($this->at(1))
+            ->method('sendFrame')
+            ->with($this->frameIsEqual(
+                new Frame('NACK', array('subscription' => 12345, 'message-id' => 54321))
+            ));
+
+        $client = $this->getConnectedClient($input, $output);
+        $client->nack(12345, 54321);
+    }
+
+    /** @test */
+    public function nackShouldSendNackFrameWithCustomHeaders()
+    {
+        $input = $this->createInputStreamMock();
+
+        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output
+            ->expects($this->at(1))
+            ->method('sendFrame')
+            ->with($this->frameIsEqual(
+                new Frame('NACK', array('foo' => 'bar', 'subscription' => 12345, 'message-id' => 54321))
+            ));
+
+        $client = $this->getConnectedClient($input, $output);
+        $client->nack(12345, 54321, array('foo' => 'bar'));
     }
 
     /** @test */
