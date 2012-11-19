@@ -2,22 +2,17 @@
 
 namespace React\Stomp\Io;
 
-use Evenement\EventEmitter;
 use React\EventLoop\LoopInterface;
 use React\Stomp\Protocol\Frame;
-use React\Stream\ReadableStreamInterface;
-use React\Stream\WritableStreamInterface;
-use React\Stream\Util;
+use React\Stream\ReadableStream;
 
 // $output = new OutputStream();
 // $output->pipe($conn);
 // $output->sendFrame($frame);
 
-class OutputStream extends EventEmitter implements OutputStreamInterface, ReadableStreamInterface
+class OutputStream extends ReadableStream implements OutputStreamInterface
 {
     private $loop;
-
-    private $readable = true;
     private $paused = false;
     private $bufferedFrames = array();
 
@@ -35,11 +30,6 @@ class OutputStream extends EventEmitter implements OutputStreamInterface, Readab
 
         $data = (string) $frame;
         $this->emit('data', array($data));
-    }
-
-    public function isReadable()
-    {
-        return $this->readable;
     }
 
     public function pause()
@@ -67,21 +57,5 @@ class OutputStream extends EventEmitter implements OutputStreamInterface, Readab
                 return;
             }
         }
-    }
-
-    public function close()
-    {
-        $this->readable = false;
-
-        $this->emit('end', array($this));
-        $this->emit('close', array($this));
-        $this->removeAllListeners();
-    }
-
-    public function pipe(WritableStreamInterface $dest, array $options = array())
-    {
-        Util::pipe($this, $dest, $options);
-
-        return $dest;
     }
 }
