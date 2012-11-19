@@ -138,6 +138,7 @@ class Client extends EventEmitter
         $frame = $this->packageCreator->disconnect($receipt);
         $this->output->sendFrame($frame);
 
+        $this->emit('disconnect', array($this));
         $this->connectDeferred = null;
     }
 

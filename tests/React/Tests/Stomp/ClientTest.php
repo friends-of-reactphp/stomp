@@ -681,6 +681,36 @@ class ClientTest extends TestCase
     }
 
     /** @test */
+    public function shouldStopHeartbeatEmittingWhenDisconnected()
+    {
+        $input = $this->createInputStreamMock();
+        $output = new OutputStream($this->createEventLoopInterfaceMock());
+
+        $collector = array();
+
+        $output->on('data', function($data) use (&$collector) {
+            if($data === "\x0A") {
+                $collector[] = $data;
+            }
+        });
+
+        $loop = EventLoopFactory::create();
+
+        $client = new Client($loop, $input, $output, array('vhost' => 'localhost', 'heartbeat-cx' => 100, 'heartbeat-cy' => 100));
+        $client->connect();
+        $input->emit('frame', array(new Frame('CONNECTED', array('heart-beat'=>'0,100'))));
+        $client->disconnect();
+
+        $loop->addPeriodicTimer(0.4, function() use ($loop) {
+            $loop->stop();
+        });
+
+        $loop->run();
+
+        $this->assertEquals(0, count($collector));
+    }
+
+    /** @test */
     public function shouldNotEmitErrorIfHeartbeatFramesReceived()
     {
         $input = $this->createInputStreamMock();
