@@ -6,4 +6,10 @@ namespace React\Stomp\Client\Command;
 
 class ConnectionEstablishedCommand implements CommandInterface
 {
+    public $heartbeatServerSettings;
+
+    public function __construct($heartbeatServerSettings)
+    {
+        $this->heartbeatServerSettings = $heartbeatServerSettings;
+    }
 }

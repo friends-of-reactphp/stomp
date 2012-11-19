@@ -12,7 +12,10 @@ class OutgoingPackageCreatorTest extends \PHPUnit_Framework_TestCase
     /** @test */
     public function connectShouldEmitConnectFrame()
     {
-        $expectedFrame = new Frame('CONNECT', array('accept-version' => '1.1', 'host' => 'stomp.github.org'));
+        $expectedFrame = new Frame('CONNECT', array(
+            'accept-version' => '1.1',
+            'host'           => 'stomp.github.org'
+        ));
 
         $state = new State();
         $packageCreator = new OutgoingPackageCreator($state);
@@ -20,6 +23,26 @@ class OutgoingPackageCreatorTest extends \PHPUnit_Framework_TestCase
         $this->assertSame(State::STATUS_INIT, $state->status);
 
         $frame = $packageCreator->connect('stomp.github.org');
+
+        $this->assertFrameEquals($expectedFrame, $frame);
+        $this->assertSame(State::STATUS_CONNECTING, $state->status);
+    }
+
+    /** @test */
+    public function connectWithHeartbeatSettingsShouldEmitConnectFrameWithSettings()
+    {
+        $expectedFrame = new Frame('CONNECT', array(
+            'accept-version' => '1.1',
+            'host'           => 'stomp.github.org',
+            'heart-beat'     => '200,400'
+        ));
+
+        $state = new State();
+        $packageCreator = new OutgoingPackageCreator($state);
+
+        $this->assertSame(State::STATUS_INIT, $state->status);
+
+        $frame = $packageCreator->connect('stomp.github.org', null, null, 200, 400);
 
         $this->assertFrameEquals($expectedFrame, $frame);
         $this->assertSame(State::STATUS_CONNECTING, $state->status);

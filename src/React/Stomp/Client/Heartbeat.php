@@ -2,6 +2,10 @@
 
 namespace React\Stomp\Client;
 
+use React\Stomp\Client;
+use React\Stomp\Io\InputStreamInterface;
+use React\Stomp\Io\OutputStreamInterface;
+
 class Heartbeat
 {
     //what the client can do
@@ -16,13 +20,33 @@ class Heartbeat
     public $lastReceivedFrame;
     public $lastSentFrame;
 
-    public function __construct($cx = 0, $cy = 0)
+    private $client;
+
+    public function __construct(Client $client, InputStreamInterface $input, OutputStreamInterface $output, $cx = 0, $cy = 0)
     {
+        $this->client = $client;
+
         $this->cx = $cx;
         $this->cy = $cy;
+
+        $this->input = $input;
+        $this->output = $output;
+
+        $this->input->on('frame', array($this, 'updateReceivedFrame'));
+        $this->output->on('data', array($this, 'updateSentFrame'));
     }
 
-    public function receptionAcknowledgement()
+    public function updateReceivedFrame($frame)
+    {
+        $this->lastReceivedFrame = microtime(true);
+    }
+
+    public function updateSentFrame($data)
+    {
+        $this->lastSentFrame = microtime(true);
+    }
+
+    public function getReceptionAcknowledgement()
     {
         $this->throwExceptionIfNoAcknowledgement();
 
@@ -33,7 +57,7 @@ class Heartbeat
         return max($this->sx, $this->cy);
     }
 
-    public function sendAcknowledgement()
+    public function getSendingAcknowledgement()
     {
         $this->throwExceptionIfNoAcknowledgement();
 
