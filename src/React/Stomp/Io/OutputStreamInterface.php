@@ -2,10 +2,11 @@
 
 namespace React\Stomp\Io;
 
-use React\Stomp\Protocol\Frame;
+use Evenement\EventEmitterInterface;
+use React\Stomp\Protocol\FrameInterface;
 
-interface OutputStreamInterface
+interface OutputStreamInterface extends EventEmitterInterface
 {
-    public function sendFrame(Frame $frame);
+    public function sendFrame(FrameInterface $frame);
     public function close();
 }

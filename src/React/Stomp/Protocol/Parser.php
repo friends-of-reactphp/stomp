@@ -10,7 +10,12 @@ class Parser
     {
         $frames = array();
 
-        while ($this->hasFullFrame($data)) {
+        while (($beat = $this->hasHeartbeat($data)) || $this->hasFullFrame($data)) {
+            if ($beat) {
+                $frames[] = new HeartbeatFrame();
+                $data = (string) substr($data, 1);
+                continue;
+            }
             list($frameData, $data) = $this->extractFrameData($data);
             $frame = $this->parseFrameData($frameData);
             $frames[] = $frame;
@@ -22,6 +27,11 @@ class Parser
     public function hasFullFrame($data)
     {
         return false !== strpos($data, "\x00");
+    }
+
+    public function hasHeartbeat($data)
+    {
+        return "\x0A" === substr($data, 0, 1);
     }
 
     public function extractFrameData($data)

@@ -2,13 +2,13 @@
 
 namespace React\Tests\Stomp\Constraint;
 
-use React\Stomp\Protocol\Frame;
+use React\Stomp\Protocol\FrameInterface;
 
 class FrameIsEqual extends \PHPUnit_Framework_Constraint
 {
     protected $frame;
 
-    public function __construct(Frame $frame)
+    public function __construct(FrameInterface $frame)
     {
         $this->frame = $frame;
     }

@@ -3,6 +3,7 @@
 namespace React\Stomp\Client;
 
 use React\Stomp\Protocol\Frame;
+use React\Stomp\Protocol\HeartbeatFrame;
 
 class OutgoingPackageCreator
 {
@@ -13,7 +14,7 @@ class OutgoingPackageCreator
         $this->state = $state;
     }
 
-    public function connect($host, $login = null, $passcode = null)
+    public function connect($host, $login = null, $passcode = null, $heartbeatCx = 0, $heartbeatCy = 0)
     {
         $this->state->startConnecting();
 
@@ -24,7 +25,18 @@ class OutgoingPackageCreator
                 'passcode'  => (string) $passcode,
             ));
         }
+        if (0 < (int) $heartbeatCx || 0 < (int) $heartbeatCy) {
+            $headers = array_merge($headers, array(
+                'heart-beat' => sprintf('%d,%d', $heartbeatCx, $heartbeatCy),
+            ));
+        }
+
         return new Frame('CONNECT', $headers);
+    }
+
+    public function heartbeat()
+    {
+        return new HeartbeatFrame();
     }
 
     public function send($destination, $body, array $headers = array())

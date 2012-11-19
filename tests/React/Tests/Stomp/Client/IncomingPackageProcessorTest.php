@@ -34,4 +34,47 @@ class IncomingPackageProcessorTest extends \PHPUnit_Framework_TestCase
 
         $this->assertInstanceOf('React\Stomp\Client\Command\NullCommand', $command);
     }
+
+    /** @test */
+    public function receiveConnectedFrameShouldReturnConnectionEstablishedCommand()
+    {
+        $state = new State();
+        $state->startConnecting();
+
+        $packageProcessor = new IncomingPackageProcessor($state);
+
+        $frame = new Frame('CONNECTED', array(
+            'session' => 'session-ServerRandom',
+            'server'  => 'Neutronicus'
+        ));
+        $command = $packageProcessor->receiveFrame($frame);
+
+        $this->assertEquals('Neutronicus', $state->server);
+        $this->assertEquals('session-ServerRandom', $state->session);
+
+        $this->assertInstanceOf('React\Stomp\Client\Command\ConnectionEstablishedCommand', $command);
+        $this->assertEquals($frame, $command->frame);
+    }
+
+    /** @test */
+    public function receiveConnectedFrameShouldReturnConnectionEstablishedCommandWithServerSettings()
+    {
+        $state = new State();
+        $state->startConnecting();
+
+        $packageProcessor = new IncomingPackageProcessor($state);
+
+        $frame = new Frame('CONNECTED', array(
+            'session'    => 'session-ServerRandom',
+            'server'     => 'Neutronicus',
+            'heart-beat' => '1000,500'
+        ));
+        $command = $packageProcessor->receiveFrame($frame);
+
+        $this->assertEquals('Neutronicus', $state->server);
+        $this->assertEquals('session-ServerRandom', $state->session);
+
+        $this->assertInstanceOf('React\Stomp\Client\Command\ConnectionEstablishedCommand', $command);
+        $this->assertEquals($frame, $command->frame);
+    }
 }
