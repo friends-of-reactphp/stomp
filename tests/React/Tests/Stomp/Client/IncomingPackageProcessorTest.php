@@ -53,7 +53,7 @@ class IncomingPackageProcessorTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('session-ServerRandom', $state->session);
 
         $this->assertInstanceOf('React\Stomp\Client\Command\ConnectionEstablishedCommand', $command);
-        $this->assertEquals('0,0', $command->heartbeatServerSettings);
+        $this->assertEquals($frame, $command->frame);
     }
 
     /** @test */
@@ -75,6 +75,6 @@ class IncomingPackageProcessorTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('session-ServerRandom', $state->session);
 
         $this->assertInstanceOf('React\Stomp\Client\Command\ConnectionEstablishedCommand', $command);
-        $this->assertEquals('1000,500', $command->heartbeatServerSettings);
+        $this->assertEquals($frame, $command->frame);
     }
 }

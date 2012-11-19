@@ -572,7 +572,7 @@ class ClientTest extends TestCase
         $output = new OutputStream($this->createEventLoopInterfaceMock());
 
         $client = $this->getConnectedClient($input, $output);
-        $heartbeat = $this->createHeartbeat($client, $input, $output);
+        $heartbeat = $this->createHeartbeat($client, $this->createEventLoopInterfaceMock(), $input, $output);
 
         $timeRef = $heartbeat->lastSentFrame;
         $client->send('/foo', 'hello');
@@ -586,7 +586,7 @@ class ClientTest extends TestCase
         $output = new OutputStream($this->createEventLoopInterfaceMock());
 
         $client = $this->getConnectedClient($input, $output);
-        $heartbeat = $this->createHeartbeat($client, $input, $output);
+        $heartbeat = $this->createHeartbeat($client, $this->createEventLoopInterfaceMock(), $input, $output);
 
         $timeRef = $heartbeat->lastSentFrame;
         $client->sendHeartbeat();
@@ -600,7 +600,7 @@ class ClientTest extends TestCase
         $output = new OutputStream($this->createEventLoopInterfaceMock());
 
         $client = $this->getConnectedClient($input, $output);
-        $heartbeat = $this->createHeartbeat($client, $input, $output);
+        $heartbeat = $this->createHeartbeat($client, $this->createEventLoopInterfaceMock(), $input, $output);
 
         $frame = $this->getMockBuilder('React\Stomp\Protocol\Frame')
             ->getMock();
@@ -617,7 +617,7 @@ class ClientTest extends TestCase
         $output = new OutputStream($this->createEventLoopInterfaceMock());
 
         $client = $this->getConnectedClient($input, $output);
-        $heartbeat = $this->createHeartbeat($client, $input, $output);
+        $heartbeat = $this->createHeartbeat($client, $this->createEventLoopInterfaceMock(), $input, $output);
 
         $timeRef = $heartbeat->lastReceivedFrame;
         $input->emit('frame', array(new HeartbeatFrame()));
@@ -739,8 +739,8 @@ class ClientTest extends TestCase
             ->getMock();
     }
 
-    private function createHeartbeat($client, $input, $output)
+    private function createHeartbeat($client, $loop, $input, $output)
     {
-        return new Heartbeat($client, $input, $output);
+        return new Heartbeat($client, $loop, $input, $output);
     }
 }

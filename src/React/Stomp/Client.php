@@ -35,7 +35,7 @@ class Client extends EventEmitter
     public function __construct(LoopInterface $loop, InputStreamInterface $input, OutputStreamInterface $output, array $options)
     {
         $this->loop = $loop;
-        $this->heartbeat = new Heartbeat($this, $input, $output);
+        $this->heartbeat = new Heartbeat($this, $loop, $input, $output);
 
         $state = new State();
         $this->packageProcessor = new IncomingPackageProcessor($state);
@@ -178,36 +178,7 @@ class Client extends EventEmitter
         }
 
         if ($command instanceof ConnectionEstablishedCommand) {
-            $this->emit('connect', array($this));
-
-            $settings = explode(',', $command->heartbeatServerSettings);
-            $this->heartbeat->sx = (int) $settings[0];
-            $this->heartbeat->sy = (int) $settings[1];
-
-            if(0 !== $interval = $this->heartbeat->getSendingAcknowledgement()) {
-                // client must send message at least evry x ms
-                $client = $this;
-                $this->loop->addPeriodicTimer(0.9 * $interval / 1000, function () use ($client) {
-                    $client->sendHeartbeat();
-                });
-            }
-
-            if(0 !== $interval = $this->heartbeat->getReceptionAcknowledgement()) {
-                // client must receive message at least every x ms
-                $heartbeat = $this->heartbeat;
-                $client = $this;
-                $this->loop->addPeriodicTimer(1.1 * $interval / 1000, function () use ($client, $heartbeat, $interval) {
-                    if (microtime(true) > ($heartbeat->lastReceivedFrame + ($interval / 1000))) {
-                        $client->emit('error', array(
-                            new \RuntimeException(
-                                sprintf('No heart beat received since %s', $heartbeat->lastReceivedFrame)
-                            )
-                        ));
-                    }
-                });
-            }
-
-
+            $this->emit('connect', array($this, $command->frame));
             return;
         }
 

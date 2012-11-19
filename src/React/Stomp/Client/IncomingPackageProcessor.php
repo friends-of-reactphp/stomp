@@ -44,7 +44,7 @@ class IncomingPackageProcessor
                 $frame->getHeader('server')
             );
 
-            return new ConnectionEstablishedCommand($frame->getHeader('heart-beat', '0,0'));
+            return new ConnectionEstablishedCommand($frame);
         }
 
         if ($this->state->isDisconnecting()) {
