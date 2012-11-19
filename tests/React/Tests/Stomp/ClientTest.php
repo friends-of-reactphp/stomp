@@ -3,9 +3,13 @@
 namespace React\Tests\Stomp;
 
 use React\Stomp\Client;
+use React\Stomp\Client\Heartbeat;
+use React\Stomp\Io\OutputStream;
 use React\Stomp\Io\InputStreamInterface;
 use React\Stomp\Io\OutputStreamInterface;
 use React\Stomp\Protocol\Frame;
+use React\Stomp\Protocol\HeartbeatFrame;
+use React\EventLoop\Factory as EventLoopFactory;
 
 class ClientTest extends TestCase
 {
@@ -18,9 +22,11 @@ class ClientTest extends TestCase
         $output
             ->expects($this->once())
             ->method('sendFrame')
-            ->with($this->frameIsEqual(new Frame('CONNECT', array('accept-version' => '1.1', 'host' => 'localhost'))));
+            ->with($this->frameIsEqual(
+                new Frame('CONNECT', array('accept-version' => '1.1', 'host' => 'localhost'))
+            ));
 
-        $client = new Client($input, $output, array('vhost' => 'localhost'));
+        $client = new Client($this->createEventLoopInterfaceMock(), $input, $output, array('vhost' => 'localhost'));
         $client->connect();
     }
 
@@ -30,7 +36,7 @@ class ClientTest extends TestCase
         $input = $this->createInputStreamMock();
         $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
 
-        $client = new Client($input, $output, array('vhost' => 'localhost'));
+        $client = new Client($this->createEventLoopInterfaceMock(), $input, $output, array('vhost' => 'localhost'));
         $promise = $client->connect();
 
         $this->assertInstanceOf('React\Promise\PromiseInterface', $promise);
@@ -45,7 +51,7 @@ class ClientTest extends TestCase
     {
         $input = $this->createInputStreamMock();
         $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
-        $client = new Client($input, $output, array());
+        $client = new Client($this->createEventLoopInterfaceMock(), $input, $output, array());
     }
 
     /** @test */
@@ -54,7 +60,7 @@ class ClientTest extends TestCase
         $input = $this->createInputStreamMock();
         $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
 
-        $client = new Client($input, $output, array('vhost' => 'localhost'));
+        $client = new Client($this->createEventLoopInterfaceMock(), $input, $output, array('vhost' => 'localhost'));
         $promise1 = $client->connect();
         $promise2 = $client->connect();
 
@@ -72,15 +78,15 @@ class ClientTest extends TestCase
 
         $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
         $output
-            ->expects($this->at(0))
+            ->expects($this->at(1))
             ->method('sendFrame')
             ->with($this->frameIsEqual($connectFrame));
         $output
-            ->expects($this->at(2))
+            ->expects($this->at(3))
             ->method('sendFrame')
             ->with($this->frameIsEqual($connectFrame));
 
-        $client = new Client($input, $output, array('vhost' => 'localhost'));
+        $client = new Client($this->createEventLoopInterfaceMock(), $input, $output, array('vhost' => 'localhost'));
         $promise1 = $client->connect();
         $client->disconnect();
         $promise2 = $client->connect();
@@ -96,7 +102,7 @@ class ClientTest extends TestCase
         $input = $this->createInputStreamMock();
         $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
 
-        $client = new Client($input, $output, array('vhost' => 'localhost'));
+        $client = new Client($this->createEventLoopInterfaceMock(), $input, $output, array('vhost' => 'localhost'));
         $client->on('connect', $this->expectCallableOnce());
         $client->connect();
 
@@ -110,7 +116,7 @@ class ClientTest extends TestCase
         $input = $this->createInputStreamMock();
         $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
 
-        $client = new Client($input, $output, array('vhost' => 'localhost'));
+        $client = new Client($this->createEventLoopInterfaceMock(), $input, $output, array('vhost' => 'localhost'));
         $client->on('connect', $this->expectCallableOnce());
         $client
             ->connect()
@@ -130,13 +136,36 @@ class ClientTest extends TestCase
     }
 
     /** @test */
+    public function itShouldAskHeartbeatIfRequired()
+    {
+        $input = $this->createInputStreamMock();
+
+        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output
+            ->expects($this->once())
+            ->method('sendFrame')
+            ->with($this->frameIsEqual(
+                new Frame('CONNECT', array(
+                    'accept-version' => '1.1',
+                    'host'           => 'localhost',
+                    'heart-beat'     => '200,300',
+                ))
+            ));
+
+        $options = array('vhost' => 'localhost', 'heartbeat-cx' => 200, 'heartbeat-cy' => 300);
+
+        $client = new Client($this->createEventLoopInterfaceMock(), $input, $output, $options);
+        $client->connect();
+    }
+
+    /** @test */
     public function sendShouldSend()
     {
         $input = $this->createInputStreamMock();
 
         $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
         $output
-            ->expects($this->at(1))
+            ->expects($this->at(2))
             ->method('sendFrame')
             ->with($this->frameIsEqual(
                 new Frame('SEND', array('destination' => '/foo', 'content-length' => '5', 'content-type' => 'text/plain'), 'hello')
@@ -144,6 +173,23 @@ class ClientTest extends TestCase
 
         $client = $this->getConnectedClient($input, $output);
         $client->send('/foo', 'hello');
+    }
+
+    /** @test */
+    public function sendHeartbeatShouldSendHeartbeat()
+    {
+        $input = $this->createInputStreamMock();
+
+        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output
+            ->expects($this->at(2))
+            ->method('sendFrame')
+            ->with($this->frameIsEqual(
+                new HeartbeatFrame()
+            ));
+
+        $client = $this->getConnectedClient($input, $output);
+        $client->sendHeartbeat();
     }
 
     /**
@@ -158,7 +204,7 @@ class ClientTest extends TestCase
         $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
 
         $output
-            ->expects($this->at(1))
+            ->expects($this->at(2))
             ->method('sendFrame')
             ->with($this->frameIsEqual(
                 new Frame('SUBSCRIBE', array('id' => 0, 'destination' => '/foo', 'ack' => $ack))
@@ -185,12 +231,12 @@ class ClientTest extends TestCase
         $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
 
         $output
-            ->expects($this->at(1))
+            ->expects($this->at(2))
             ->method('sendFrame')
             ->with($this->frameHasHeader('id', 0));
 
         $output
-            ->expects($this->at(2))
+            ->expects($this->at(3))
             ->method('sendFrame')
             ->with($this->frameHasHeader('id', 1));
 
@@ -208,7 +254,7 @@ class ClientTest extends TestCase
         $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
 
         $output
-            ->expects($this->at(1))
+            ->expects($this->at(2))
             ->method('sendFrame')
             ->with($this->frameIsEqual(
                 new Frame('SUBSCRIBE', array('foo' => 'bar', 'id' => 0, 'destination' => '/foo', 'ack' => 'auto'))
@@ -290,7 +336,7 @@ class ClientTest extends TestCase
         $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
 
         $output
-            ->expects($this->at(2))
+            ->expects($this->at(3))
             ->method('sendFrame')
             ->with($this->frameIsEqual(
                 new Frame('ACK', array('subscription' => 0, 'message-id' => 54321))
@@ -326,7 +372,7 @@ class ClientTest extends TestCase
         $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
 
         $output
-            ->expects($this->at(2))
+            ->expects($this->at(3))
             ->method('sendFrame')
             ->with($this->frameIsEqual(
                 new Frame('NACK', array('subscription' => 0, 'message-id' => 54321))
@@ -409,7 +455,7 @@ class ClientTest extends TestCase
 
         $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
         $output
-            ->expects($this->at(1))
+            ->expects($this->at(2))
             ->method('sendFrame')
             ->with($this->frameIsEqual(
                 new Frame('ACK', array('subscription' => 12345, 'message-id' => 54321))
@@ -426,7 +472,7 @@ class ClientTest extends TestCase
 
         $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
         $output
-            ->expects($this->at(1))
+            ->expects($this->at(2))
             ->method('sendFrame')
             ->with($this->frameIsEqual(
                 new Frame('ACK', array('foo' => 'bar', 'subscription' => 12345, 'message-id' => 54321))
@@ -443,7 +489,7 @@ class ClientTest extends TestCase
 
         $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
         $output
-            ->expects($this->at(1))
+            ->expects($this->at(2))
             ->method('sendFrame')
             ->with($this->frameIsEqual(
                 new Frame('NACK', array('subscription' => 12345, 'message-id' => 54321))
@@ -460,7 +506,7 @@ class ClientTest extends TestCase
 
         $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
         $output
-            ->expects($this->at(1))
+            ->expects($this->at(2))
             ->method('sendFrame')
             ->with($this->frameIsEqual(
                 new Frame('NACK', array('foo' => 'bar', 'subscription' => 12345, 'message-id' => 54321))
@@ -477,7 +523,7 @@ class ClientTest extends TestCase
         $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
 
         $client = $this->getMockBuilder('React\Stomp\Client')
-            ->setConstructorArgs(array($input, $output, array('vhost' => 'localhost')))
+            ->setConstructorArgs(array($this->createEventLoopInterfaceMock(), $input, $output, array('vhost' => 'localhost')))
             ->setMethods(array('generateReceiptId'))
             ->getMock();
         $client
@@ -519,9 +565,153 @@ class ClientTest extends TestCase
         $input->emit('error', array($e));
     }
 
+    /** @test */
+    public function sendingAFrameShouldIncreaseHeartbeatLatestSentFrame()
+    {
+        $input = $this->createInputStreamMock();
+        $output = new OutputStream($this->createEventLoopInterfaceMock());
+
+        $client = $this->getConnectedClient($input, $output);
+        $heartbeat = $this->createHeartbeat($client, $input, $output);
+
+        $timeRef = $heartbeat->lastSentFrame;
+        $client->send('/foo', 'hello');
+        $this->assertGreaterThan($timeRef, $heartbeat->lastSentFrame);
+    }
+
+    /** @test */
+    public function sendingAHearbeatFrameShouldIncreaseHeartbeatLatestSentFrame()
+    {
+        $input = $this->createInputStreamMock();
+        $output = new OutputStream($this->createEventLoopInterfaceMock());
+
+        $client = $this->getConnectedClient($input, $output);
+        $heartbeat = $this->createHeartbeat($client, $input, $output);
+
+        $timeRef = $heartbeat->lastSentFrame;
+        $client->sendHeartbeat();
+        $this->assertGreaterThan($timeRef, $heartbeat->lastSentFrame);
+    }
+
+    /** @test */
+    public function receivingAFrameShouldIncreaseHeartbeatLatestReceivedFrame()
+    {
+        $input = $this->createInputStreamMock();
+        $output = new OutputStream($this->createEventLoopInterfaceMock());
+
+        $client = $this->getConnectedClient($input, $output);
+        $heartbeat = $this->createHeartbeat($client, $input, $output);
+
+        $frame = $this->getMockBuilder('React\Stomp\Protocol\Frame')
+            ->getMock();
+
+        $timeRef = $heartbeat->lastReceivedFrame;
+        $input->emit('frame', array($frame));
+        $this->assertGreaterThan($timeRef, $heartbeat->lastReceivedFrame);
+    }
+
+    /** @test */
+    public function receivingAHeartbeatFrameShouldIncreaseHeartbeatLatestReceivedFrame()
+    {
+        $input = $this->createInputStreamMock();
+        $output = new OutputStream($this->createEventLoopInterfaceMock());
+
+        $client = $this->getConnectedClient($input, $output);
+        $heartbeat = $this->createHeartbeat($client, $input, $output);
+
+        $timeRef = $heartbeat->lastReceivedFrame;
+        $input->emit('frame', array(new HeartbeatFrame()));
+        $this->assertGreaterThan($timeRef, $heartbeat->lastReceivedFrame);
+    }
+
+    /** @test */
+    public function enablingHeartbeatWillPeriodicallySendHeartbeatFrames()
+    {
+        $input = $this->createInputStreamMock();
+        $output = new OutputStream($this->createEventLoopInterfaceMock());
+
+        $collector = array();
+
+        $output->on('data', function($data) use (&$collector) {
+            if($data === "\x0A") {
+                $collector[] = $data;
+            }
+        });
+
+        $loop = EventLoopFactory::create();
+
+        $client = new Client($loop, $input, $output, array('vhost' => 'localhost', 'heartbeat-cx' => 100, 'heartbeat-cy' => 100));
+        $client->connect();
+        $input->emit('frame', array(new Frame('CONNECTED', array('heart-beat'=>'0,100'))));
+
+        $loop->addPeriodicTimer(0.4, function() use ($loop) {
+            $loop->stop();
+        });
+
+        $loop->run();
+
+        $this->assertGreaterThanOrEqual(3, count($collector));
+    }
+
+    /** @test */
+    public function shouldEmitErrorIfHeartbeatEnabledAndNoFrameReceived()
+    {
+        $input = $this->createInputStreamMock();
+        $output = new OutputStream($this->createEventLoopInterfaceMock());
+        $loop = EventLoopFactory::create();
+        $client = new Client($loop, $input, $output, array('vhost' => 'localhost', 'heartbeat-cx' => 100, 'heartbeat-cy' => 100));
+        $client->connect();
+
+        $collector = array();
+        $client->on('error', function($data) use (&$collector) {
+            if($data instanceof \RuntimeException) {
+                $collector[] = $data;
+            }
+        });
+
+        $input->emit('frame', array(new Frame('CONNECTED', array('heart-beat'=>'100,0'))));
+
+        $loop->addPeriodicTimer(0.4, function() use ($loop) {
+            $loop->stop();
+        });
+
+        $loop->run();
+
+        $this->assertGreaterThanOrEqual(3, count($collector));
+    }
+
+    /** @test */
+    public function shouldNotEmitErrorIfHeartbeatFramesReceived()
+    {
+        $input = $this->createInputStreamMock();
+        $output = new OutputStream($this->createEventLoopInterfaceMock());
+        $loop = EventLoopFactory::create();
+        $client = new Client($loop, $input, $output, array('vhost' => 'localhost', 'heartbeat-cx' => 100, 'heartbeat-cy' => 100));
+
+        $collector = array();
+        $client->on('error', function($data) use (&$collector) {
+            if($data instanceof \RuntimeException) {
+                $collector[] = $data;
+            }
+        });
+
+        $input->emit('frame', array(new Frame('CONNECTED', array('heart-beat'=>'100,0'))));
+
+        $loop->addPeriodicTimer(0.05, function() use ($loop, $input) {
+            $input->emit('frame', array(new HeartbeatFrame()));
+        });
+        $loop->addPeriodicTimer(0.4, function() use ($loop) {
+            $loop->stop();
+        });
+
+        $loop->run();
+
+        $this->assertCount(0, $collector);
+    }
+
     private function getConnectedClient(InputStreamInterface $input, OutputStreamInterface $output)
     {
-        $client = new Client($input, $output, array('vhost' => 'localhost'));
+        $client = new Client($this->createEventLoopInterfaceMock(), $input, $output, array('vhost' => 'localhost'));
         $client->connect();
         $input->emit('frame', array(new Frame('CONNECTED')));
 
@@ -534,5 +724,23 @@ class ClientTest extends TestCase
             ->setConstructorArgs(array($this->getMock('React\Stomp\Protocol\Parser')))
             ->setMethods(array('isWritable', 'write', 'end', 'close'))
             ->getMock();
+    }
+
+    private function createOutputStreamMock()
+    {
+        return $this->getMockBuilder('React\Stomp\Io\OutputStream')
+            ->setConstructorArgs(array($this->createEventLoopInterfaceMock()))
+            ->getMock();
+    }
+
+    private function createEventLoopInterfaceMock()
+    {
+        return $this->getMockBuilder('React\EventLoop\LoopInterface')
+            ->getMock();
+    }
+
+    private function createHeartbeat($client, $input, $output)
+    {
+        return new Heartbeat($client, $input, $output);
     }
 }

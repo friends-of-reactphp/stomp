@@ -4,6 +4,9 @@ namespace React\Stomp;
 
 use Evenement\EventEmitter;
 use React\Promise\Deferred;
+use React\EventLoop\LoopInterface;
+use React\Stomp\Client\Heartbeat;
+use React\Stomp\Protocol\HeartbeatFrame;
 use React\Stomp\Client\IncomingPackageProcessor;
 use React\Stomp\Client\OutgoingPackageCreator;
 use React\Stomp\Client\State;
@@ -20,6 +23,8 @@ use React\Stomp\Protocol\FrameInterface;
 // Events: connect, error
 class Client extends EventEmitter
 {
+    private $loop;
+    private $heartbeat;
     private $packageProcessor;
     private $packageCreator;
     private $subscriptions = array();
@@ -27,8 +32,11 @@ class Client extends EventEmitter
     private $options = array();
     private $connectDeferred;
 
-    public function __construct(InputStreamInterface $input, OutputStreamInterface $output, array $options)
+    public function __construct(LoopInterface $loop, InputStreamInterface $input, OutputStreamInterface $output, array $options)
     {
+        $this->loop = $loop;
+        $this->heartbeat = new Heartbeat($this, $input, $output);
+
         $state = new State();
         $this->packageProcessor = new IncomingPackageProcessor($state);
         $this->packageCreator = new OutgoingPackageCreator($state);
@@ -38,7 +46,10 @@ class Client extends EventEmitter
         $this->input->on('error', array($this, 'handleErrorEvent'));
         $this->output = $output;
 
-        $this->options = $this->sanatizeOptions($options);
+        $this->options = $this->sanitizeOptions($options);
+
+        $this->heartbeat->cx = $this->options['heartbeat-cx'];
+        $this->heartbeat->cy = $this->options['heartbeat-cy'];
     }
 
     public function connect()
@@ -53,7 +64,9 @@ class Client extends EventEmitter
         $frame = $this->packageCreator->connect(
             $this->options['vhost'],
             $this->options['login'],
-            $this->options['passcode']
+            $this->options['passcode'],
+            $this->heartbeat->cx,
+            $this->heartbeat->cy
         );
         $this->output->sendFrame($frame);
 
@@ -113,6 +126,12 @@ class Client extends EventEmitter
         $this->output->sendFrame($frame);
     }
 
+    public function sendHeartbeat()
+    {
+        $frame = $this->packageCreator->heartbeat();
+        $this->output->sendFrame($frame);
+    }
+
     public function disconnect()
     {
         $receipt = $this->generateReceiptId();
@@ -138,6 +157,10 @@ class Client extends EventEmitter
 
     public function processFrame(FrameInterface $frame)
     {
+        if ($frame instanceof HeartbeatFrame) {
+            return;
+        }
+
         $command = $this->packageProcessor->receiveFrame($frame);
         $this->executeCommand($command);
 
@@ -156,6 +179,35 @@ class Client extends EventEmitter
 
         if ($command instanceof ConnectionEstablishedCommand) {
             $this->emit('connect', array($this));
+
+            $settings = explode(',', $command->heartbeatServerSettings);
+            $this->heartbeat->sx = (int) $settings[0];
+            $this->heartbeat->sy = (int) $settings[1];
+
+            if(0 !== $interval = $this->heartbeat->getSendingAcknowledgement()) {
+                // client must send message at least evry x ms
+                $client = $this;
+                $this->loop->addPeriodicTimer(0.9 * $interval / 1000, function () use ($client) {
+                    $client->sendHeartbeat();
+                });
+            }
+
+            if(0 !== $interval = $this->heartbeat->getReceptionAcknowledgement()) {
+                // client must receive message at least every x ms
+                $heartbeat = $this->heartbeat;
+                $client = $this;
+                $this->loop->addPeriodicTimer(1.1 * $interval / 1000, function () use ($client, $heartbeat, $interval) {
+                    if (microtime(true) > ($heartbeat->lastReceivedFrame + ($interval / 1000))) {
+                        $client->emit('error', array(
+                            new \RuntimeException(
+                                sprintf('No heart beat received since %s', $heartbeat->lastReceivedFrame)
+                            )
+                        ));
+                    }
+                });
+            }
+
+
             return;
         }
 
@@ -186,16 +238,18 @@ class Client extends EventEmitter
         call_user_func_array($callback, $parameters);
     }
 
-    private function sanatizeOptions($options)
+    private function sanitizeOptions($options)
     {
         if (!isset($options['host']) && !isset($options['vhost'])) {
             throw new \InvalidArgumentException('Either host or vhost options must be provided.');
         }
 
         return array_merge(array(
-            'vhost'     => isset($options['host']) ? $options['host'] : null,
-            'login'     => null,
-            'passcode'  => null,
+            'vhost'         => isset($options['host']) ? $options['host'] : null,
+            'login'         => null,
+            'passcode'      => null,
+            'heartbeat-cx'  => 0,
+            'heartbeat-cy'  => 0,
         ), $options);
     }
 

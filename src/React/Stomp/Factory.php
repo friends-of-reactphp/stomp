@@ -3,6 +3,7 @@
 namespace React\Stomp;
 
 use React\EventLoop\LoopInterface;
+use React\Stomp\Client\Heartbeat;
 use React\Stomp\Protocol\Parser;
 use React\Stomp\Io\InputStream;
 use React\Stomp\Io\OutputStream;
@@ -16,6 +17,8 @@ class Factory
         'vhost'     => '/',
         'login'     => 'guest',
         'passcode'  => 'guest',
+        'heartbeat-cx' => 0,
+        'heartbeat-cy' => 0,
     );
 
     private $loop;
@@ -42,7 +45,7 @@ class Factory
             $input->emit('error', array($e));
         });
 
-        return new Client($input, $output, $options);
+        return new Client($this->loop, $input, $output, $options);
     }
 
     public function createConnection($options)
