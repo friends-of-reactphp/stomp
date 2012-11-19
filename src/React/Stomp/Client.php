@@ -48,8 +48,8 @@ class Client extends EventEmitter
 
         $this->options = $this->sanitizeOptions($options);
 
-        $this->heartbeat->cx = $this->options['heartbeat-cx'];
-        $this->heartbeat->cy = $this->options['heartbeat-cy'];
+        $this->heartbeat->clientGuarantee = $this->options['heartbeat-guarantee'];
+        $this->heartbeat->clientExpect    = $this->options['heartbeat-expect'];
     }
 
     public function connect()
@@ -65,8 +65,8 @@ class Client extends EventEmitter
             $this->options['vhost'],
             $this->options['login'],
             $this->options['passcode'],
-            $this->heartbeat->cx,
-            $this->heartbeat->cy
+            $this->heartbeat->clientGuarantee,
+            $this->heartbeat->clientExpect
         );
         $this->output->sendFrame($frame);
 
@@ -217,11 +217,11 @@ class Client extends EventEmitter
         }
 
         return array_merge(array(
-            'vhost'         => isset($options['host']) ? $options['host'] : null,
-            'login'         => null,
-            'passcode'      => null,
-            'heartbeat-cx'  => 0,
-            'heartbeat-cy'  => 0,
+            'vhost'               => isset($options['host']) ? $options['host'] : null,
+            'login'               => null,
+            'passcode'            => null,
+            'heartbeat-guarantee' => 0,
+            'heartbeat-expect'    => 0,
         ), $options);
     }
 

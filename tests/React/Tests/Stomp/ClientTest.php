@@ -152,7 +152,7 @@ class ClientTest extends TestCase
                 ))
             ));
 
-        $options = array('vhost' => 'localhost', 'heartbeat-cx' => 200, 'heartbeat-cy' => 300);
+        $options = array('vhost' => 'localhost', 'heartbeat-guarantee' => 200, 'heartbeat-expect' => 300);
 
         $client = new Client($this->createEventLoopInterfaceMock(), $input, $output, $options);
         $client->connect();
@@ -640,7 +640,7 @@ class ClientTest extends TestCase
 
         $loop = EventLoopFactory::create();
 
-        $client = new Client($loop, $input, $output, array('vhost' => 'localhost', 'heartbeat-cx' => 100, 'heartbeat-cy' => 100));
+        $client = new Client($loop, $input, $output, array('vhost' => 'localhost', 'heartbeat-guarantee' => 100, 'heartbeat-expect' => 100));
         $client->connect();
         $input->emit('frame', array(new Frame('CONNECTED', array('heart-beat'=>'0,100'))));
 
@@ -659,7 +659,7 @@ class ClientTest extends TestCase
         $input = $this->createInputStreamMock();
         $output = new OutputStream($this->createEventLoopInterfaceMock());
         $loop = EventLoopFactory::create();
-        $client = new Client($loop, $input, $output, array('vhost' => 'localhost', 'heartbeat-cx' => 100, 'heartbeat-cy' => 100));
+        $client = new Client($loop, $input, $output, array('vhost' => 'localhost', 'heartbeat-guarantee' => 100, 'heartbeat-expect' => 100));
         $client->connect();
 
         $collector = array();
@@ -696,7 +696,7 @@ class ClientTest extends TestCase
 
         $loop = EventLoopFactory::create();
 
-        $client = new Client($loop, $input, $output, array('vhost' => 'localhost', 'heartbeat-cx' => 100, 'heartbeat-cy' => 100));
+        $client = new Client($loop, $input, $output, array('vhost' => 'localhost', 'heartbeat-guarantee' => 100, 'heartbeat-expect' => 100));
         $client->connect();
         $input->emit('frame', array(new Frame('CONNECTED', array('heart-beat'=>'0,100'))));
         $client->disconnect();
@@ -716,7 +716,7 @@ class ClientTest extends TestCase
         $input = $this->createInputStreamMock();
         $output = new OutputStream($this->createEventLoopInterfaceMock());
         $loop = EventLoopFactory::create();
-        $client = new Client($loop, $input, $output, array('vhost' => 'localhost', 'heartbeat-cx' => 100, 'heartbeat-cy' => 100));
+        $client = new Client($loop, $input, $output, array('vhost' => 'localhost', 'heartbeat-guarantee' => 100, 'heartbeat-expect' => 100));
 
         $collector = array();
         $client->on('error', function($data) use (&$collector) {

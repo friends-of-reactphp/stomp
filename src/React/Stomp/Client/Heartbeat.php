@@ -10,14 +10,10 @@ use React\Stomp\Io\OutputStreamInterface;
 
 class Heartbeat
 {
-    //what the client can do
-    public $cx;
-    //what the client would like to get
-    public $cy;
-    //what the server can do
-    public $sx;
-    //what the server would like to get
-    public $sy;
+    public $clientGuarantee;
+    public $clientExpect;
+    public $serverGuarantee;
+    public $serverExpect;
 
     public $lastReceivedFrame;
     public $lastSentFrame;
@@ -33,8 +29,8 @@ class Heartbeat
         $this->client = $client;
         $this->loop = $loop;
 
-        $this->cx = $cx;
-        $this->cy = $cy;
+        $this->clientGuarantee = $cx;
+        $this->clientExpect = $cy;
 
         $this->input = $input;
         $this->output = $output;
@@ -48,8 +44,8 @@ class Heartbeat
     public function clientConnected(Client $client, Frame $frame)
     {
         $settings = explode(',', $frame->getHeader('heart-beat') ?: '0,0');
-        $this->sx = (int) $settings[0];
-        $this->sy = (int) $settings[1];
+        $this->serverGuarantee = (int) $settings[0];
+        $this->serverExpect = (int) $settings[1];
 
         if(0 !== $interval = $this->getSendingAcknowledgement()) {
             // client must send message at least evry x ms
@@ -95,28 +91,28 @@ class Heartbeat
     {
         $this->throwExceptionIfNoAcknowledgement();
 
-        if ($this->sx === 0 || $this->cy === 0) {
+        if ($this->serverGuarantee === 0 || $this->clientExpect === 0) {
             return 0;
         }
 
-        return max($this->sx, $this->cy);
+        return max($this->serverGuarantee, $this->clientExpect);
     }
 
     public function getSendingAcknowledgement()
     {
         $this->throwExceptionIfNoAcknowledgement();
 
-        if ($this->cx === 0 || $this->sy === 0) {
+        if ($this->clientGuarantee === 0 || $this->serverExpect === 0) {
             return 0;
         }
 
-        return max($this->cx, $this->sy);
+        return max($this->clientGuarantee, $this->serverExpect);
     }
 
     private function throwExceptionIfNoAcknowledgement()
     {
-        if(null === $this->sx || null === $this->sy) {
-            throw new \RuntimeException('Hheart-beating acknowledgement is not ready');
+        if(null === $this->serverGuarantee || null === $this->serverExpect) {
+            throw new \RuntimeException('Heart-beating acknowledgement is not ready');
         }
     }
 }

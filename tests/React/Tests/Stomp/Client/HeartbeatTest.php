@@ -13,7 +13,7 @@ class HeartbeatTest extends \PHPUnit_Framework_TestCase
      * @test
      * @expectedException \RuntimeException
      */
-    public function noSendingAcknowledgementIfServerDidNotAnswerd()
+    public function noSendingAcknowledgementIfServerDidNotAnswer()
     {
         $heartbeat = $this->createHeartBeat();
         $heartbeat->getSendingAcknowledgement();
@@ -23,7 +23,7 @@ class HeartbeatTest extends \PHPUnit_Framework_TestCase
      * @test
      * @expectedException \RuntimeException
      */
-    public function noReceptionAcknowledgementIfServerDidNotAnswerd()
+    public function noReceptionAcknowledgementIfServerDidNotAnswer()
     {
         $heartbeat = $this->createHeartBeat();
         $heartbeat->getReceptionAcknowledgement();
@@ -36,10 +36,10 @@ class HeartbeatTest extends \PHPUnit_Framework_TestCase
     public function receptionAndSendingAcknowledgementBasedOnRequestAndResponse($clientRequested, $clientProposed, $serverRequested, $serverProposed, $sendingAcknowledgmeent, $receptionAcknowledgmeent)
     {
         $heartbeat = $this->createHeartBeat();
-        $heartbeat->cx = $clientRequested;
-        $heartbeat->cy = $clientProposed;
-        $heartbeat->sx = $serverRequested;
-        $heartbeat->sy = $serverProposed;
+        $heartbeat->clientGuarantee = $clientRequested;
+        $heartbeat->clientExpect = $clientProposed;
+        $heartbeat->serverGuarantee = $serverRequested;
+        $heartbeat->serverExpect = $serverProposed;
 
         $this->assertEquals($sendingAcknowledgmeent, $heartbeat->getSendingAcknowledgement());
         $this->assertEquals($receptionAcknowledgmeent, $heartbeat->getReceptionAcknowledgement());
@@ -49,7 +49,7 @@ class HeartbeatTest extends \PHPUnit_Framework_TestCase
     public function shouldIncreaseReceivedTimestampOnFrameReception()
     {
         $input = new InputStream($this->getMock('React\Stomp\Protocol\Parser'));
-        $heartbeat = new Heartbeat($this->createClientMock(), $this->createEventLoopInterfaceMock(), $input, $this->createOutputStreamMock());
+        $heartbeat = new Heartbeat($this->createClientMock(), $this->createLoopMock(), $input, $this->createOutputStreamMock());
 
         $this->assertNull($heartbeat->lastReceivedFrame);
 
@@ -65,8 +65,8 @@ class HeartbeatTest extends \PHPUnit_Framework_TestCase
     /** @test */
     public function shouldIncreaseReceivedTimestampOnFrameSending()
     {
-        $output = new OutputStream($this->createEventLoopInterfaceMock());
-        $heartbeat = new Heartbeat($this->createClientMock(), $this->createEventLoopInterfaceMock(), $this->createInputStreamMock(), $output);
+        $output = new OutputStream($this->createLoopMock());
+        $heartbeat = new Heartbeat($this->createClientMock(), $this->createLoopMock(), $this->createInputStreamMock(), $output);
 
         $this->assertNull($heartbeat->lastSentFrame);
 
@@ -100,7 +100,7 @@ class HeartbeatTest extends \PHPUnit_Framework_TestCase
 
     private function createHeartBeat()
     {
-        return new Heartbeat($this->createClientMock(), $this->createEventLoopInterfaceMock(), $this->createInputStreamMock(), $this->createOutputStreamMock());
+        return new Heartbeat($this->createClientMock(), $this->createLoopMock(), $this->createInputStreamMock(), $this->createOutputStreamMock());
     }
 
     private function createInputStreamMock()
@@ -113,11 +113,11 @@ class HeartbeatTest extends \PHPUnit_Framework_TestCase
     private function createOutputStreamMock()
     {
         return $this->getMockBuilder('React\Stomp\Io\OutputStream')
-                ->setConstructorArgs(array($this->createEventLoopInterfaceMock()))
+                ->setConstructorArgs(array($this->createLoopMock()))
                 ->getMock();
     }
 
-    private function createEventLoopInterfaceMock()
+    private function createLoopMock()
     {
         return $this->getMockBuilder('React\EventLoop\LoopInterface')
                 ->getMock();

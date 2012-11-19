@@ -7,8 +7,8 @@ require __DIR__.'/../vendor/autoload.php';
 $loop = React\EventLoop\Factory::create();
 $factory = new React\Stomp\Factory($loop);
 $client = $factory->createClient(array(
-    'heartbeat-cx' => 100,
-    'heartbeat-cy' => 200,
+    'heartbeat-guarantee' => 100,
+    'heartbeat-expect'    => 200,
 ));
 
 $client
@@ -17,7 +17,7 @@ $client
         $client->subscribe('/topic/foo', function ($frame) {
             echo "Message received: {$frame->body}\n";
         });
-        
+
         $client->on('error', function ($error) {
             echo "Client error: {$error->getMessage()}\n";
         });

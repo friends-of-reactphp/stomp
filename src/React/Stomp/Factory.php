@@ -12,13 +12,13 @@ use React\Socket\Connection;
 class Factory
 {
     private $defaultOptions = array(
-        'host'         => '127.0.0.1',
-        'port'         => 61613,
-        'vhost'        => '/',
-        'login'        => 'guest',
-        'passcode'     => 'guest',
-        'heartbeat-cx' => 0,
-        'heartbeat-cy' => 0,
+        'host'                => '127.0.0.1',
+        'port'                => 61613,
+        'vhost'               => '/',
+        'login'               => 'guest',
+        'passcode'            => 'guest',
+        'heartbeat-guarantee' => 0,
+        'heartbeat-expect'    => 0,
     );
 
     private $loop;
