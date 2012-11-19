@@ -22,6 +22,9 @@ class Heartbeat
     public $lastReceivedFrame;
     public $lastSentFrame;
 
+    private $clientTimerSignature;
+    private $serverTimerSignature;
+
     private $client;
     private $loop;
 
@@ -37,6 +40,7 @@ class Heartbeat
         $this->output = $output;
 
         $this->client->on('connect', array($this, 'clientConnected'));
+        $this->client->on('disconnect', array($this, 'clientDisconnected'));
         $this->input->on('frame', array($this, 'updateReceivedFrame'));
         $this->output->on('data', array($this, 'updateSentFrame'));
     }
@@ -50,7 +54,7 @@ class Heartbeat
         if(0 !== $interval = $this->getSendingAcknowledgement()) {
             // client must send message at least evry x ms
             $client = $this->client;
-            $this->loop->addPeriodicTimer(0.9 * $interval / 1000, function () use ($client) {
+            $this->clientTimerSignature = $this->loop->addPeriodicTimer(0.9 * $interval / 1000, function () use ($client) {
                 $client->sendHeartbeat();
             });
         }
@@ -59,7 +63,7 @@ class Heartbeat
             // client must receive message at least every x ms
             $heartbeat = $this;
             $client = $this->client;
-            $this->loop->addPeriodicTimer(1.1 * $interval / 1000, function () use ($client, $heartbeat, $interval) {
+            $this->serverTimerSignature = $this->loop->addPeriodicTimer(1.1 * $interval / 1000, function () use ($client, $heartbeat, $interval) {
                 if (microtime(true) > ($heartbeat->lastReceivedFrame + ($interval / 1000))) {
                     $client->emit('error', array(
                         new \RuntimeException(
@@ -69,6 +73,12 @@ class Heartbeat
                 }
             });
         }
+    }
+    public function clientDisconnected(Client $client)
+    {
+        $this->loop->cancelTimer($this->clientTimerSignature);
+        $this->loop->cancelTimer($this->serverTimerSignature);
+        $this->lastReceivedFrame = $this->lastSentFrame = null;
     }
 
     public function updateReceivedFrame($frame)
