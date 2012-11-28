@@ -1,5 +1,5 @@
 {
-    "hash": "53b6232a8c37875c74a23dfada788fee",
+    "hash": "3c81f74ffe8e490a47d3b4762fbfe022",
     "packages": [
         {
             "name": "evenement/evenement",
@@ -18,42 +18,28 @@
             "require": {
                 "php": ">=5.3.0"
             },
-            "time": "2012-05-30 08:01:08",
+            "time": "2012-05-30 15:01:08",
             "type": "library",
             "installation-source": "dist",
             "autoload": {
                 "psr-0": {
                     "Evenement": "src"
                 }
-            },
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Igor Wiedler",
-                    "email": "igor@wiedler.ch",
-                    "homepage": "http://wiedler.ch/igor/"
-                }
-            ],
-            "description": "Événement is a very simple event dispatching library for PHP 5.3",
-            "keywords": [
-                "event-dispatcher"
-            ]
+            }
         },
         {
             "name": "react/event-loop",
-            "version": "v0.2.4",
+            "version": "v0.2.5",
             "target-dir": "React/EventLoop",
             "source": {
                 "type": "git",
                 "url": "https://github.com/reactphp/event-loop",
-                "reference": "v0.2.4"
+                "reference": "v0.2.5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://github.com/reactphp/event-loop/archive/v0.2.4.zip",
-                "reference": "v0.2.4",
+                "url": "https://github.com/reactphp/event-loop/archive/v0.2.5.zip",
+                "reference": "v0.2.5",
                 "shasum": ""
             },
             "require": {
@@ -129,17 +115,17 @@
         },
         {
             "name": "react/socket",
-            "version": "v0.2.4",
+            "version": "v0.2.5",
             "target-dir": "React/Socket",
             "source": {
                 "type": "git",
                 "url": "https://github.com/reactphp/socket",
-                "reference": "v0.2.4"
+                "reference": "v0.2.5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://github.com/reactphp/socket/archive/v0.2.4.zip",
-                "reference": "v0.2.4",
+                "url": "https://github.com/reactphp/socket/archive/v0.2.5.zip",
+                "reference": "v0.2.5",
                 "shasum": ""
             },
             "require": {
@@ -171,17 +157,17 @@
         },
         {
             "name": "react/stream",
-            "version": "v0.2.4",
+            "version": "v0.2.5",
             "target-dir": "React/Stream",
             "source": {
                 "type": "git",
                 "url": "https://github.com/reactphp/stream",
-                "reference": "v0.2.4"
+                "reference": "v0.2.5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://github.com/reactphp/stream/archive/v0.2.4.zip",
-                "reference": "v0.2.4",
+                "url": "https://github.com/reactphp/stream/archive/v0.2.5.zip",
+                "reference": "v0.2.5",
                 "shasum": ""
             },
             "require": {
@@ -189,9 +175,10 @@
                 "evenement/evenement": "1.0.*"
             },
             "suggest": {
-                "react/event-loop": "0.2.*"
+                "react/event-loop": "0.2.*",
+                "react/promise": "1.0.*"
             },
-            "time": "2012-11-18 00:18:39",
+            "time": "2012-11-19 08:24:10",
             "type": "library",
             "extra": {
                 "branch-alias": {
@@ -214,7 +201,9 @@
             ]
         }
     ],
-    "packages-dev": null,
+    "packages-dev": [
+
+    ],
     "aliases": [
 
     ],
