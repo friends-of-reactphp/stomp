@@ -1,7 +1,7 @@
 CHANGELOG
 =========
 
-* 0.1.1 (2012-11-xx)
+* 0.1.1 (2012-12-26)
 
   * API for ACK/NACK with `subscribe` (@romainneutron)
   * Client::isConnected method (@romainneutron)
