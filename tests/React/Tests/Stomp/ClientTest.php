@@ -105,6 +105,48 @@ class ClientTest extends TestCase
     }
 
     /** @test */
+    public function itShouldNotBeConnectedAfterConstructor()
+    {
+        $input = $this->createInputStreamMock();
+        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+
+        $client = new Client($input, $output, array('vhost' => 'localhost'));
+
+        $this->assertFalse($client->isConnected());
+    }
+
+    /** @test */
+    public function itShouldBeConnectedWhenThePromiseIsResolved()
+    {
+        $input = $this->createInputStreamMock();
+        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+
+        $client = new Client($input, $output, array('vhost' => 'localhost'));
+        $client->connect();
+
+        $frame = new Frame('CONNECTED', array('session' => '1234', 'server' => 'React/alpha'));
+        $input->emit('frame', array($frame));
+
+        $this->assertTrue($client->isConnected());
+    }
+
+    /** @test */
+    public function itShouldNotBeConnectedAfterDisconnection()
+    {
+        $input = $this->createInputStreamMock();
+        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+
+        $client = new Client($input, $output, array('vhost' => 'localhost'));
+        $client->connect();
+
+        $frame = new Frame('CONNECTED', array('session' => '1234', 'server' => 'React/alpha'));
+        $input->emit('frame', array($frame));
+
+        $client->disconnect();
+        $this->assertFalse($client->isConnected());
+    }
+
+    /** @test */
     public function itShouldResolveConnectPromiseAfterHandshake()
     {
         $input = $this->createInputStreamMock();
