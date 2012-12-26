@@ -43,17 +43,17 @@
         },
         {
             "name": "react/event-loop",
-            "version": "v0.2.4",
+            "version": "v0.2.5",
             "target-dir": "React/EventLoop",
             "source": {
                 "type": "git",
                 "url": "https://github.com/reactphp/event-loop",
-                "reference": "v0.2.4"
+                "reference": "v0.2.5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://github.com/reactphp/event-loop/archive/v0.2.4.zip",
-                "reference": "v0.2.4",
+                "url": "https://github.com/reactphp/event-loop/archive/v0.2.5.zip",
+                "reference": "v0.2.5",
                 "shasum": ""
             },
             "require": {
@@ -76,6 +76,7 @@
                     "React\\EventLoop": ""
                 }
             },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -129,17 +130,17 @@
         },
         {
             "name": "react/socket",
-            "version": "v0.2.4",
+            "version": "v0.2.5",
             "target-dir": "React/Socket",
             "source": {
                 "type": "git",
                 "url": "https://github.com/reactphp/socket",
-                "reference": "v0.2.4"
+                "reference": "v0.2.5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://github.com/reactphp/socket/archive/v0.2.4.zip",
-                "reference": "v0.2.4",
+                "url": "https://github.com/reactphp/socket/archive/v0.2.5.zip",
+                "reference": "v0.2.5",
                 "shasum": ""
             },
             "require": {
@@ -161,6 +162,7 @@
                     "React\\Socket": ""
                 }
             },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -171,17 +173,17 @@
         },
         {
             "name": "react/stream",
-            "version": "v0.2.4",
+            "version": "v0.2.5",
             "target-dir": "React/Stream",
             "source": {
                 "type": "git",
                 "url": "https://github.com/reactphp/stream",
-                "reference": "v0.2.4"
+                "reference": "v0.2.5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://github.com/reactphp/stream/archive/v0.2.4.zip",
-                "reference": "v0.2.4",
+                "url": "https://github.com/reactphp/stream/archive/v0.2.5.zip",
+                "reference": "v0.2.5",
                 "shasum": ""
             },
             "require": {
@@ -189,9 +191,10 @@
                 "evenement/evenement": "1.0.*"
             },
             "suggest": {
-                "react/event-loop": "0.2.*"
+                "react/event-loop": "0.2.*",
+                "react/promise": "1.0.*"
             },
-            "time": "2012-11-18 00:18:39",
+            "time": "2012-11-19 08:24:10",
             "type": "library",
             "extra": {
                 "branch-alias": {
@@ -204,6 +207,7 @@
                     "React\\Stream": ""
                 }
             },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
