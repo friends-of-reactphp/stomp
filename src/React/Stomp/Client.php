@@ -19,6 +19,7 @@ use React\Stomp\Protocol\Frame;
 // Events: connect, error
 class Client extends EventEmitter
 {
+    private $connected = false;
     private $packageProcessor;
     private $packageCreator;
     private $subscriptions = array();
@@ -46,7 +47,13 @@ class Client extends EventEmitter
             return $this->connectDeferred->promise();
         }
 
+        $that = $this;
+
         $this->connectDeferred = new Deferred();
+        $this->connectDeferred->then(function () use ($that) {
+            $that->setConnected(true);
+        });
+
         $this->on('connect', array($this->connectDeferred, 'resolve'));
 
         $frame = $this->packageCreator->connect(
@@ -119,6 +126,7 @@ class Client extends EventEmitter
         $this->output->sendFrame($frame);
 
         $this->connectDeferred = null;
+        $this->connected = false;
     }
 
     public function handleFrameEvent(Frame $frame)
@@ -196,6 +204,16 @@ class Client extends EventEmitter
             'login'     => null,
             'passcode'  => null,
         ), $options);
+    }
+
+    public function isConnected()
+    {
+        return $this->connected;
+    }
+
+    public function setConnected($connected)
+    {
+        $this->connected = (Boolean) $connected;
     }
 
     public function generateReceiptId()
