@@ -29,6 +29,28 @@ Body\x00";
     }
 
     /** @test */
+    public function itShouldParseASingleFrameStartingWithANewLine()
+    {
+        $data = "
+MESSAGE
+header1:value1
+header2:value2
+
+Body\x00";
+
+        $parser = new Parser();
+        list($frames, $data) = $parser->parse($data);
+
+        $this->assertHasSingleFrame(
+            'MESSAGE',
+            array('header1' => 'value1', 'header2' => 'value2'),
+            'Body',
+            $data,
+            $frames
+        );
+    }
+
+    /** @test */
     public function itShouldAllowUtf8InHeaders()
     {
         $data = "MESSAGE
