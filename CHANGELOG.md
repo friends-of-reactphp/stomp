@@ -4,6 +4,7 @@ CHANGELOG
 * 0.1.2 (2012-12-27)
 
   * Connection error handling (@romainneutron)
+  * Support for Apollo and ActiveMQ (@romainneutron)
 
 * 0.1.1 (2012-12-26)
 
