@@ -17,4 +17,4 @@ if (!isset($argv[1]) || !file_exists(__DIR__.'/'.$argv[1].'.php')) {
     exit(1);
 }
 
-return require __DIR__ . '/' . $argv[1] . '.php';
+return require __DIR__.'/'.$argv[1].'.php';
