@@ -2,13 +2,11 @@
 
 require __DIR__.'/../vendor/autoload.php';
 
+$conf = require __DIR__ . '/config/probe.php';
+
 $loop = React\EventLoop\Factory::create();
 $factory = new React\Stomp\Factory($loop);
-$client = $factory->createClient(array(
-    'host'      => 'localhost',
-    'login'     => 'system',
-    'passcode'  => 'manager',
-));
+$client = $factory->createClient($conf);
 
 $client
     ->connect()
@@ -27,9 +25,9 @@ $client
             }
         });
 
-        $loop->addPeriodicTimer(1, function () use ($client) {
-            $client->send('/topic/foo', 'le message');
-        });
+        $client->send('/topic/foo', 'le message');
+    }, function (\Exception $e) {
+        echo sprintf("Could not connect : %s\n", $e->getMessage());
     });
 
 $loop->run();
