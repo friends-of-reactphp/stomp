@@ -22,7 +22,7 @@ use React\Stomp\Protocol\Frame;
  */
 class Client extends EventEmitter
 {
-    private $connected = false;
+    private $connectionStatus = 'not-connected';
     private $packageProcessor;
     private $packageCreator;
     private $subscriptions = array();
@@ -50,11 +50,13 @@ class Client extends EventEmitter
             return $this->connectDeferred->promise();
         }
 
+        $this->connectionStatus = 'connecting';
+
         $that = $this;
 
         $this->connectDeferred = new Deferred();
         $this->connectDeferred->then(function () use ($that) {
-            $that->setConnected(true);
+            $that->setConnectionStatus('connected');
         });
 
         $this->on('connect', array($this->connectDeferred, 'resolve'));
@@ -129,7 +131,7 @@ class Client extends EventEmitter
         $this->output->sendFrame($frame);
 
         $this->connectDeferred = null;
-        $this->connected = false;
+        $this->connectionStatus = 'not-connected';
     }
 
     public function handleFrameEvent(Frame $frame)
@@ -138,6 +140,12 @@ class Client extends EventEmitter
             $this->processFrame($frame);
         } catch (ProcessingException $e) {
             $this->emit('error', array($e));
+
+            if ($this->connectionStatus === 'connecting') {
+                $this->connectDeferred->reject($e);
+                $this->connectDeferred = null;
+                $this->connectionStatus = 'not-connected';
+            }
         }
     }
 
@@ -211,12 +219,12 @@ class Client extends EventEmitter
 
     public function isConnected()
     {
-        return $this->connected;
+        return $this->connectionStatus === 'connected';
     }
 
-    public function setConnected($connected)
+    public function setConnectionStatus($status)
     {
-        $this->connected = (Boolean) $connected;
+        $this->connectionStatus = $status;
     }
 
     public function generateReceiptId()
