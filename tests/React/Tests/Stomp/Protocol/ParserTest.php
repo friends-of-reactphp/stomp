@@ -28,6 +28,33 @@ Body\x00";
         );
     }
 
+    /**
+     * ActiveMQ adds an extra new line character between the end of a frame and
+     * the next command
+     *
+     * @test
+     */
+    public function itShouldParseASingleFrameStartingWithANewLine()
+    {
+        $data = "
+MESSAGE
+header1:value1
+header2:value2
+
+Body\x00";
+
+        $parser = new Parser();
+        list($frames, $data) = $parser->parse($data);
+
+        $this->assertHasSingleFrame(
+            'MESSAGE',
+            array('header1' => 'value1', 'header2' => 'value2'),
+            'Body',
+            $data,
+            $frames
+        );
+    }
+
     /** @test */
     public function itShouldAllowUtf8InHeaders()
     {
