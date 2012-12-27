@@ -105,6 +105,20 @@ class ClientTest extends TestCase
     }
 
     /** @test */
+    public function itShouldRejectPromiseIfConnectionFails()
+    {
+        $input = $this->createInputStreamMock();
+        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+
+        $client = new Client($input, $output, array('vhost' => 'localhost'));
+        $client->connect()
+            ->then($this->expectCallableNever(), $this->expectCallableOnce());
+
+        $frame = new Frame('ERROR', array(), 'Invalid virtual host: /');
+        $input->emit('frame', array($frame));
+    }
+
+    /** @test */
     public function itShouldNotBeConnectedAfterConstructor()
     {
         $input = $this->createInputStreamMock();

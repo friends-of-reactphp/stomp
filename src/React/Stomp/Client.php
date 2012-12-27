@@ -137,6 +137,12 @@ class Client extends EventEmitter
             $this->processFrame($frame);
         } catch (ProcessingException $e) {
             $this->emit('error', array($e));
+
+            if ($this->connectionStatus === 'connecting') {
+                $this->connectDeferred->reject($e);
+                $this->connectDeferred = null;
+                $this->connectionStatus = 'not-connected';
+            }
         }
     }
 
