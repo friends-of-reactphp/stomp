@@ -35,7 +35,7 @@ class Parser
 
         list($head, $body) = explode("\n\n", $data, 2);
 
-        $lines = explode("\n", $head);
+        $lines = explode("\n", ltrim($head, "\n"));
 
         $frame->command = array_shift($lines);
 
