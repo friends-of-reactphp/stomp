@@ -1,6 +1,10 @@
 CHANGELOG
 =========
 
+* 0.1.2 (2012-12-27)
+
+  * Connection error handling (@romainneutron)
+
 * 0.1.1 (2012-12-26)
 
   * API for ACK/NACK with `subscribe` (@romainneutron)
