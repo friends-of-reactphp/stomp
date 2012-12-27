@@ -27,7 +27,7 @@ $client
 
         $client->send('/topic/foo', 'le message');
     }, function (\Exception $e) {
-        echo sprintf("Could not connect : %s\n", $e->getMessage());
+        echo sprintf("Could not connect: %s\n", $e->getMessage());
     });
 
 $loop->run();
