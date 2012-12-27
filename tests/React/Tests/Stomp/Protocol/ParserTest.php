@@ -29,8 +29,8 @@ Body\x00";
     }
 
     /**
-     * ActiveMQ adds an extra new line character between the end of a frame and
-     * the next command
+     * ActiveMQ and Apollo add an extra new line character between the end of
+     * a frame and the next command.
      *
      * @test
      */
