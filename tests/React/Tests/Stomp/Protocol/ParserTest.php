@@ -28,7 +28,12 @@ Body\x00";
         );
     }
 
-    /** @test */
+    /**
+     * ActiveMQ adds an extra new line character between the end of a frame and
+     * the next command
+     *
+     * @test
+     */
     public function itShouldParseASingleFrameStartingWithANewLine()
     {
         $data = "
