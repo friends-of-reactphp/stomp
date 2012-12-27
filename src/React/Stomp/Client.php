@@ -16,7 +16,10 @@ use React\Stomp\Io\InputStreamInterface;
 use React\Stomp\Io\OutputStreamInterface;
 use React\Stomp\Protocol\Frame;
 
-// Events: connect, error
+/**
+ * @event connect
+ * @event error
+ */
 class Client extends EventEmitter
 {
     private $connected = false;
