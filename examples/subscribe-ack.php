@@ -13,19 +13,21 @@ $client
     ->then(function ($client) use ($loop) {
         $i = 0;
 
-        $client->subscribeWithAck('/topic/foo', 'client', function ($frame, $ackResolver) use (&$i, $client) {
-            $i++;
-            echo "Message $i received: {$frame->body}\n";
+        $client->subscribeWithAck('/topic/foo', 'client', function ($frame, $ackResolver) use ($client) {
 
-            if ($i < 10) {
+            if (0 === mt_rand() % 2) {
+                echo "Message {$frame->body} received but not acknowledged\n";
                 $ackResolver->nack();
             } else {
+                echo "Message {$frame->body} received\n";
                 $ackResolver->ack();
-                $client->disconnect();
             }
         });
 
-        $client->send('/topic/foo', 'le message');
+        $loop->addPeriodicTimer(1, function () use (&$i, $client) {
+            $client->send('/topic/foo', "le message #$i");
+            $i++;
+        });
     }, function (\Exception $e) {
         echo sprintf("Could not connect: %s\n", $e->getMessage());
     });
