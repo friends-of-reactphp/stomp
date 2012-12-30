@@ -13,7 +13,7 @@
 >
     <testsuites>
         <testsuite name="React/STOMP Test Suite">
-            <directory>./tests/React/</directory>
+            <directory>./tests/React/Tests</directory>
         </testsuite>
     </testsuites>
 
