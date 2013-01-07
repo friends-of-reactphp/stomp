@@ -54,7 +54,7 @@ class basicTest extends TestCase
     }
 
     /** @test */
-    public function itShouldReceiveOnSubscribedTopics()
+    public function itShouldReceiveOnSubscribedTopicsWhatItSends()
     {
         $loop = $this->getEventLoop();
         $client = $this->getClient($loop);
@@ -76,5 +76,33 @@ class basicTest extends TestCase
 
         $loop->run();
         $this->assertTrue($received);
+    }
+
+    /** @test */
+    public function itShouldReceiveAgainNackedMessages()
+    {
+        $loop = $this->getEventLoop();
+        $client = $this->getClient($loop);
+
+        $counter = 0;
+
+        $client
+            ->connect()
+            ->then(function ($client) use ($loop, &$counter) {
+                $client->subscribeWithAck('/topic/foo', 'client-individual', function ($frame, $resolver) use ($loop, &$counter) {
+                    if (0 === $counter) {
+                        $resolver->nack();
+                    } else {
+                        $resolver->ack();
+                        $loop->stop();
+                    }
+                    $counter++;
+                });
+
+                $client->send('/topic/foo', 'le message à la papa');
+            });
+
+        $loop->run();
+        $this->assertEquals(2, $counter);
     }
 }
