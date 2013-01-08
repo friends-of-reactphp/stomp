@@ -81,6 +81,8 @@ class basicTest extends TestCase
     /** @test */
     public function itShouldReceiveAgainNackedMessages()
     {
+        $this->markTestSkipped('Temporary disabling this test as Apollo hang on it');
+
         $loop = $this->getEventLoop();
         $client = $this->getClient($loop);
 
