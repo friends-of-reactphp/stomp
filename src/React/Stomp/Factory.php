@@ -3,9 +3,10 @@
 namespace React\Stomp;
 
 use React\EventLoop\LoopInterface;
-use React\Stomp\Protocol\Parser;
+use React\Stomp\Exception\ConnectionException;
 use React\Stomp\Io\InputStream;
 use React\Stomp\Io\OutputStream;
+use React\Stomp\Protocol\Parser;
 use React\Socket\Connection;
 
 class Factory
@@ -49,7 +50,11 @@ class Factory
     {
         $address = 'tcp://'.$options['host'].':'.$options['port'];
 
-        $fd = stream_socket_client($address);
+        if (false === $fd = @stream_socket_client($address, $errno, $errstr)) {
+            $message = "Could not bind to $address: $errstr";
+            throw new ConnectionException($message, $errno);
+        }
+
         $conn = new Connection($fd, $this->loop);
 
         return $conn;
