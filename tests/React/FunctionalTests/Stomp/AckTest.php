@@ -7,7 +7,9 @@ class AckTest extends FunctionalTestCase
     /** @test */
     public function itShouldReceiveAgainNackedMessages()
     {
-        $this->markTestSkipped('Temporary disabling this test as Apollo hang on it');
+        if ('apollo' === getenv('STOMP_PROVIDER')) {
+            $this->markTestSkipped('Temporary disabling this test as Apollo hang on it');
+        }
 
         $loop = $this->getEventLoop();
         $client = $this->getClient($loop);
