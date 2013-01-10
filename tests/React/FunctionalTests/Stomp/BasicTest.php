@@ -1,8 +1,8 @@
 <?php
 
-namespace React\FunctionnalTests\Stomp;
+namespace React\FunctionalTests\Stomp;
 
-class basicTest extends TestCase
+class basicTest extends FunctionalTestCase
 {
     /** @test */
     public function itShouldConnect()

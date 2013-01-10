@@ -24,7 +24,7 @@ foreach($before as $command) {
     exec($command);
 }
 
-passthru('phpunit -c ' . __DIR__ . '/../../../phpunit-functionnal.xml.dist', $return_var);
+passthru('phpunit -c ' . __DIR__ . '/../../../phpunit-functional.xml.dist', $return_var);
 
 foreach($after as $command) {
     exec($command);
