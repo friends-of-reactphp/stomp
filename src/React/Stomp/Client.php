@@ -12,9 +12,11 @@ use React\Stomp\Client\Command\CloseCommand;
 use React\Stomp\Client\Command\ConnectionEstablishedCommand;
 use React\Stomp\Client\Command\NullCommand;
 use React\Stomp\Exception\ProcessingException;
+use React\Stomp\Exception\ConnectionException;
 use React\Stomp\Io\InputStreamInterface;
 use React\Stomp\Io\OutputStreamInterface;
 use React\Stomp\Protocol\Frame;
+use React\EventLoop\LoopInterface;
 
 /**
  * @event connect
@@ -22,6 +24,7 @@ use React\Stomp\Protocol\Frame;
  */
 class Client extends EventEmitter
 {
+    private $loop;
     private $connectionStatus = 'not-connected';
     private $packageProcessor;
     private $packageCreator;
@@ -30,8 +33,9 @@ class Client extends EventEmitter
     private $options = array();
     private $connectDeferred;
 
-    public function __construct(InputStreamInterface $input, OutputStreamInterface $output, array $options)
+    public function __construct(LoopInterface $loop, InputStreamInterface $input, OutputStreamInterface $output, array $options)
     {
+        $this->loop = $loop;
         $state = new State();
         $this->packageProcessor = new IncomingPackageProcessor($state);
         $this->packageCreator = new OutgoingPackageCreator($state);
@@ -44,7 +48,7 @@ class Client extends EventEmitter
         $this->options = $this->sanatizeOptions($options);
     }
 
-    public function connect()
+    public function connect($timeout = 5)
     {
         if ($this->connectDeferred) {
             return $this->connectDeferred->promise();
@@ -53,13 +57,21 @@ class Client extends EventEmitter
         $this->connectionStatus = 'connecting';
 
         $that = $this;
+        $loop = $this->loop;
 
         $this->connectDeferred = new Deferred();
         $this->connectDeferred->then(function () use ($that) {
             $that->setConnectionStatus('connected');
         });
 
-        $this->on('connect', array($this->connectDeferred, 'resolve'));
+        $timerSignature = $this->loop->addTimer($timeout, function () {
+            $this->connectDeferred->reject(new ConnectionException('Connection timeout'));
+        });
+
+        $this->on('connect', function ($client) use ($timerSignature, $loop) {
+            $loop->cancelTimer($timerSignature);
+            $this->connectDeferred->resolve($client);
+        });
 
         $frame = $this->packageCreator->connect(
             $this->options['vhost'],

@@ -43,7 +43,7 @@ class Factory
             $input->emit('error', array($e));
         });
 
-        return new Client($input, $output, $options);
+        return new Client($this->loop, $input, $output, $options);
     }
 
     public function createConnection($options)
