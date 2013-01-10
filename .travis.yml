@@ -11,8 +11,17 @@ env:
   - STOMP_PROVIDER=apollo
 
 before_script:
-  - sh -c "if [ '$STOMP_PROVIDER' = 'apollo' ]; then wget http://apache.opensourcemirror.com/activemq/activemq-apollo/1.5/apache-apollo-1.5-unix-distro.tar.gz; tar xzf apache-apollo-1.5-unix-distro.tar.gz; ./apache-apollo-1.5/bin/apollo create apollo; ./apollo/bin/apollo-broker-service start; sleep 6; cp examples/config/apollo.php tests/React/FunctionalTests/config.php; fi"
-  - sh -c "if [ '$STOMP_PROVIDER' = 'rabbitmq' ]; then sudo rabbitmq-plugins enable rabbitmq_stomp; sudo service rabbitmq-server start; cp examples/config/rabbitmq.php tests/React/FunctionalTests/config.php; fi"
+  - sh -c " if [ '$STOMP_PROVIDER' = 'apollo' ]; then
+              wget http://apache.opensourcemirror.com/activemq/activemq-apollo/1.5/apache-apollo-1.5-unix-distro.tar.gz;
+              tar xzf apache-apollo-1.5-unix-distro.tar.gz;
+              ./apache-apollo-1.5/bin/apollo create apollo;
+              ./apollo/bin/apollo-broker-service start;
+              sleep 6;
+            fi"
+  - sh -c " if [ '$STOMP_PROVIDER' = 'rabbitmq' ]; then
+              sudo rabbitmq-plugins enable rabbitmq_stomp;
+              sudo service rabbitmq-server start;
+            fi"
   - composer install
 
 script:
