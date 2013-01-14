@@ -146,6 +146,36 @@ class ClientTest extends TestCase
     }
 
     /** @test */
+    public function timeoutThenConnectShouldReturnANewPromise()
+    {
+        $input = $this->createInputStreamMock();
+        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+
+        $loop = $this->createLoopMock();
+        $timeout = 30;
+
+        $capturedInterval = $capturedCallback = null;
+
+        $loop->expects($this->any())
+            ->method('addTimer')
+            ->will($this->returnCallback(function ($interval, $callback) use (&$capturedInterval, &$capturedCallback) {
+                $capturedInterval = $interval;
+                $capturedCallback = $callback;
+            }));
+
+        $client = new Client($loop, $input, $output, array('vhost' => 'localhost'));
+        $promise1 = $client->connect($timeout);
+
+        call_user_func($capturedCallback);
+
+        $promise2 = $client->connect($timeout);
+
+        $this->assertInstanceOf('React\Promise\PromiseInterface', $promise1);
+        $this->assertInstanceOf('React\Promise\PromiseInterface', $promise2);
+        $this->assertNotSame($promise1, $promise2);
+    }
+
+    /** @test */
     public function itShouldCancelTimerOnConnection()
     {
         $input = $this->createInputStreamMock();
@@ -182,6 +212,25 @@ class ClientTest extends TestCase
         $client = new Client($this->createLoopMock(), $input, $output, array('vhost' => 'localhost'));
 
         $this->assertFalse($client->isConnected());
+    }
+
+    /** @test */
+    public function itShouldThrowAnExceptionOnConnectedFrameOutsideWindow()
+    {
+        $input = $this->createInputStreamMock();
+        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $loop = $this->createLoopMock();
+
+        $errors = array();
+
+        $client = new Client($loop, $input, $output, array('vhost' => 'localhost'));
+        $client->on('error', function ($error) use (&$errors) { $errors[] = $error; });
+
+        $frame = new Frame('CONNECTED', array('session' => '1234', 'server' => 'React/alpha'));
+        $input->emit('frame', array($frame));
+
+        $this->assertCount(1, $errors);
+        $this->assertInstanceOf('React\Stomp\Exception\InvalidFrameException', $errors[0]);
     }
 
     /** @test */

@@ -56,16 +56,18 @@ class Client extends EventEmitter
 
         $this->connectionStatus = 'connecting';
 
-        $that = $this;
+        $client = $this;
         $loop = $this->loop;
 
         $this->connectDeferred = new Deferred();
-        $this->connectDeferred->then(function () use ($that) {
-            $that->setConnectionStatus('connected');
+        $this->connectDeferred->then(function () use ($client) {
+            $client->setConnectionStatus('connected');
         });
 
         $timerSignature = $this->loop->addTimer($timeout, function () {
             $this->connectDeferred->reject(new ConnectionException('Connection timeout'));
+            $this->connectDeferred = null;
+            $this->connectionStatus = 'not-connected';
         });
 
         $this->on('connect', function ($client) use ($timerSignature, $loop) {
