@@ -2,24 +2,25 @@
 
 namespace React\FunctionalTests\Stomp;
 
+use React\Promise\When;
+
 class AckTest extends FunctionalTestCase
 {
     /** @test */
     public function itShouldReceiveAgainNackedMessages()
     {
-        if ('apollo' === getenv('STOMP_PROVIDER')) {
-            $this->markTestSkipped('Temporary disabling this test as Apollo hang on it');
-        }
-
         $loop = $this->getEventLoop();
-        $client = $this->getClient($loop);
+        $client1 = $this->getClient($loop);
+        $client2 = $this->getClient($loop);
 
         $counter = 0;
 
-        $client
-            ->connect()
-            ->then(function ($client) use ($loop, &$counter) {
-                $client->subscribeWithAck('/topic/foo', 'client-individual', function ($frame, $resolver) use ($loop, &$counter) {
+        When::all(array(
+                $client1->connect(),
+                $client2->connect(),
+            ),
+            function () use ($client1, $client2, $loop, &$counter) {
+                $callback = function ($frame, $resolver) use ($loop, &$counter) {
                     if (0 === $counter) {
                         $resolver->nack();
                     } else {
@@ -27,10 +28,14 @@ class AckTest extends FunctionalTestCase
                         $loop->stop();
                     }
                     $counter++;
-                });
+                };
 
-                $client->send('/topic/foo', 'le message à la papa');
-            });
+                $client1->subscribeWithAck('/topic/foo', 'client-individual', $callback);
+                $client2->subscribeWithAck('/topic/foo', 'client-individual', $callback);
+
+                $client1->send('/topic/foo', 'le message à la papa');
+            }
+        );
 
         $loop->run();
         $this->assertEquals(2, $counter);
