@@ -8,6 +8,9 @@ CHANGELOG
     OutputStreamInterface that both have the `close` method in common
     (@romainneutron)
   * Functional test suite (@romainneutron)
+  * Handle connection timeouts and failures (@romainneutron)
+  * BC break: Client takes an event loop argument. If you use the factory,
+    you are unaffected.
 
 * 0.1.2 (2012-12-27)
 
