@@ -1,6 +1,6 @@
 <?php
 
-namespace React\FunctionalTests\Stomp;
+namespace React\Functional\Stomp;
 
 use React\Promise\When;
 
