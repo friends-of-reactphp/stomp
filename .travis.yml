@@ -6,7 +6,24 @@ php:
   - 5.4
   - 5.5
 
+env:
+  - STOMP_PROVIDER=rabbitmq
+  - STOMP_PROVIDER=apollo
+
 before_script:
+  - sh -c " if [ '$STOMP_PROVIDER' = 'apollo' ]; then
+              wget http://apache.opensourcemirror.com/activemq/activemq-apollo/1.5/apache-apollo-1.5-unix-distro.tar.gz;
+              tar xzf apache-apollo-1.5-unix-distro.tar.gz;
+              ./apache-apollo-1.5/bin/apollo create apollo;
+              ./apollo/bin/apollo-broker-service start;
+              sleep 6;
+            fi"
+  - sh -c " if [ '$STOMP_PROVIDER' = 'rabbitmq' ]; then
+              sudo rabbitmq-plugins enable rabbitmq_stomp;
+              sudo service rabbitmq-server start;
+            fi"
   - composer install
 
-script: phpunit --coverage-text
+script:
+  - phpunit --coverage-text
+  - phpunit -c phpunit-functional.xml.dist
