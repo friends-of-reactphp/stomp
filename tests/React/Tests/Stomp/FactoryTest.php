@@ -26,7 +26,7 @@ class FactoryTest extends TestCase
 
         try {
             $factory->createConnection(array('host' => 'localhost', 'port' => 37235));
-            $this->fail('This should have raise an exception');
+            $this->fail('This should have raised an exception');
         } catch (ConnectionException $e) {
 
         }
