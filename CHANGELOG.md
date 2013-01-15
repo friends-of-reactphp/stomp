@@ -4,8 +4,10 @@ CHANGELOG
 * 0.1.3 (201x-xx-xx)
 
   * Support for PHP >=5.3.3, <=5.3.8
-    (OutputStream is extending ReadableStream and implements
-    OutputStreamInterface that both have the `close` method in common.)
+    OutputStream extends ReadableStream and implements
+    OutputStreamInterface that both have the `close` method in common
+    (@romainneutron)
+  * Functional test suite (@romainneutron)
 
 * 0.1.2 (2012-12-27)
 
