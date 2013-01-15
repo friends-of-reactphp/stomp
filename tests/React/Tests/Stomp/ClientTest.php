@@ -231,6 +231,7 @@ class ClientTest extends TestCase
 
         $this->assertCount(1, $errors);
         $this->assertInstanceOf('React\Stomp\Exception\InvalidFrameException', $errors[0]);
+        $this->assertSame("Received 'CONNECTED' frame outside a connecting window.", $errors[0]->getMessage());
     }
 
     /** @test */
