@@ -42,6 +42,10 @@ class IncomingPackageProcessor
             return new ConnectionEstablishedCommand();
         }
 
+        if ('CONNECTED' === $frame->command) {
+            throw new InvalidFrameException(sprintf("Received 'CONNECTED' frame outside a connecting window."));
+        }
+
         if ($this->state->isDisconnecting()) {
             if ('RECEIPT' === $frame->command && $this->state->isDisconnectionReceipt($frame->getHeader('receipt-id'))) {
                 $this->state->doneDisconnecting();

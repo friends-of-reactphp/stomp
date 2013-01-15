@@ -3,6 +3,7 @@
 namespace React\Tests\Stomp;
 
 use React\Stomp\Factory;
+use React\Stomp\Exception\ConnectionException;
 
 class FactoryTest extends TestCase
 {
@@ -15,6 +16,20 @@ class FactoryTest extends TestCase
         $conn = $factory->createConnection(array('host' => 'localhost', 'port' => 37234));
 
         $this->assertInstanceOf('React\Socket\Connection', $conn);
+    }
+
+    /** @test */
+    public function itShouldThrowAnExceptionInCaseSocketCreationFails()
+    {
+        $loop = $this->getMock('React\EventLoop\LoopInterface');
+        $factory = new Factory($loop);
+
+        try {
+            $factory->createConnection(array('host' => 'localhost', 'port' => 37235));
+            $this->fail('This should have raised an exception');
+        } catch (ConnectionException $e) {
+
+        }
     }
 
     public function testCreateClient()

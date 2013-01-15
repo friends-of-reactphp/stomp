@@ -20,7 +20,7 @@ class ClientTest extends TestCase
             ->method('sendFrame')
             ->with($this->frameIsEqual(new Frame('CONNECT', array('accept-version' => '1.1', 'host' => 'localhost'))));
 
-        $client = new Client($input, $output, array('vhost' => 'localhost'));
+        $client = new Client($this->createLoopMock(), $input, $output, array('vhost' => 'localhost'));
         $client->connect();
     }
 
@@ -30,7 +30,7 @@ class ClientTest extends TestCase
         $input = $this->createInputStreamMock();
         $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
 
-        $client = new Client($input, $output, array('vhost' => 'localhost'));
+        $client = new Client($this->createLoopMock(), $input, $output, array('vhost' => 'localhost'));
         $promise = $client->connect();
 
         $this->assertInstanceOf('React\Promise\PromiseInterface', $promise);
@@ -45,7 +45,7 @@ class ClientTest extends TestCase
     {
         $input = $this->createInputStreamMock();
         $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
-        $client = new Client($input, $output, array());
+        $client = new Client($this->createLoopMock(), $input, $output, array());
     }
 
     /** @test */
@@ -54,7 +54,7 @@ class ClientTest extends TestCase
         $input = $this->createInputStreamMock();
         $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
 
-        $client = new Client($input, $output, array('vhost' => 'localhost'));
+        $client = new Client($this->createLoopMock(), $input, $output, array('vhost' => 'localhost'));
         $promise1 = $client->connect();
         $promise2 = $client->connect();
 
@@ -80,7 +80,7 @@ class ClientTest extends TestCase
             ->method('sendFrame')
             ->with($this->frameIsEqual($connectFrame));
 
-        $client = new Client($input, $output, array('vhost' => 'localhost'));
+        $client = new Client($this->createLoopMock(), $input, $output, array('vhost' => 'localhost'));
         $promise1 = $client->connect();
         $client->disconnect();
         $promise2 = $client->connect();
@@ -96,7 +96,7 @@ class ClientTest extends TestCase
         $input = $this->createInputStreamMock();
         $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
 
-        $client = new Client($input, $output, array('vhost' => 'localhost'));
+        $client = new Client($this->createLoopMock(), $input, $output, array('vhost' => 'localhost'));
         $client->on('connect', $this->expectCallableOnce());
         $client->connect();
 
@@ -110,11 +110,96 @@ class ClientTest extends TestCase
         $input = $this->createInputStreamMock();
         $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
 
-        $client = new Client($input, $output, array('vhost' => 'localhost'));
+        $client = new Client($this->createLoopMock(), $input, $output, array('vhost' => 'localhost'));
         $client->connect()
             ->then($this->expectCallableNever(), $this->expectCallableOnce());
 
         $frame = new Frame('ERROR', array(), 'Invalid virtual host: /');
+        $input->emit('frame', array($frame));
+    }
+
+    /** @test */
+    public function itShouldRejectPromiseIfConnectionTimeout()
+    {
+        $input = $this->createInputStreamMock();
+        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+
+        $loop = $this->createLoopMock();
+        $timeout = 30;
+
+        $capturedInterval = $capturedCallback = null;
+
+        $loop->expects($this->once())
+            ->method('addTimer')
+            ->with($this->equalTo($timeout), $this->isType('callable'))
+            ->will($this->returnCallback(function ($interval, $callback) use (&$capturedInterval, &$capturedCallback) {
+                $capturedInterval = $interval;
+                $capturedCallback = $callback;
+            }));
+
+
+        $client = new Client($loop, $input, $output, array('vhost' => 'localhost'));
+        $client->connect($timeout)
+            ->then($this->expectCallableNever(), $this->expectCallableOnce());
+
+        call_user_func($capturedCallback);
+    }
+
+    /** @test */
+    public function timeoutThenConnectShouldReturnANewPromise()
+    {
+        $input = $this->createInputStreamMock();
+        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+
+        $loop = $this->createLoopMock();
+        $timeout = 30;
+
+        $capturedInterval = $capturedCallback = null;
+
+        $loop->expects($this->any())
+            ->method('addTimer')
+            ->will($this->returnCallback(function ($interval, $callback) use (&$capturedInterval, &$capturedCallback) {
+                $capturedInterval = $interval;
+                $capturedCallback = $callback;
+            }));
+
+        $client = new Client($loop, $input, $output, array('vhost' => 'localhost'));
+        $promise1 = $client->connect($timeout);
+
+        call_user_func($capturedCallback);
+
+        $promise2 = $client->connect($timeout);
+
+        $this->assertInstanceOf('React\Promise\PromiseInterface', $promise1);
+        $this->assertInstanceOf('React\Promise\PromiseInterface', $promise2);
+        $this->assertNotSame($promise1, $promise2);
+    }
+
+    /** @test */
+    public function itShouldCancelTimerOnConnection()
+    {
+        $input = $this->createInputStreamMock();
+        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+
+        $timeout = 30;
+        $signature = uniqid('signature');
+
+        $loop = $this->createLoopMock();
+
+        $loop->expects($this->once())
+            ->method('addTimer')
+            ->with($this->equalTo($timeout), $this->isType('callable'))
+            ->will($this->returnValue($signature));
+
+        $loop->expects($this->once())
+            ->method('cancelTimer')
+            ->with($this->equalTo($signature));
+
+        $client = new Client($loop, $input, $output, array('vhost' => 'localhost'));
+        $client->connect($timeout)
+            ->then($this->expectCallableOnce());
+
+        $frame = new Frame('CONNECTED', array('session' => '1234', 'server' => 'React/alpha'));
         $input->emit('frame', array($frame));
     }
 
@@ -124,9 +209,29 @@ class ClientTest extends TestCase
         $input = $this->createInputStreamMock();
         $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
 
-        $client = new Client($input, $output, array('vhost' => 'localhost'));
+        $client = new Client($this->createLoopMock(), $input, $output, array('vhost' => 'localhost'));
 
         $this->assertFalse($client->isConnected());
+    }
+
+    /** @test */
+    public function itShouldThrowAnExceptionOnConnectedFrameOutsideWindow()
+    {
+        $input = $this->createInputStreamMock();
+        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $loop = $this->createLoopMock();
+
+        $errors = array();
+
+        $client = new Client($loop, $input, $output, array('vhost' => 'localhost'));
+        $client->on('error', function ($error) use (&$errors) { $errors[] = $error; });
+
+        $frame = new Frame('CONNECTED', array('session' => '1234', 'server' => 'React/alpha'));
+        $input->emit('frame', array($frame));
+
+        $this->assertCount(1, $errors);
+        $this->assertInstanceOf('React\Stomp\Exception\InvalidFrameException', $errors[0]);
+        $this->assertSame("Received 'CONNECTED' frame outside a connecting window.", $errors[0]->getMessage());
     }
 
     /** @test */
@@ -135,7 +240,7 @@ class ClientTest extends TestCase
         $input = $this->createInputStreamMock();
         $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
 
-        $client = new Client($input, $output, array('vhost' => 'localhost'));
+        $client = new Client($this->createLoopMock(), $input, $output, array('vhost' => 'localhost'));
         $client->connect();
 
         $frame = new Frame('CONNECTED', array('session' => '1234', 'server' => 'React/alpha'));
@@ -150,7 +255,7 @@ class ClientTest extends TestCase
         $input = $this->createInputStreamMock();
         $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
 
-        $client = new Client($input, $output, array('vhost' => 'localhost'));
+        $client = new Client($this->createLoopMock(), $input, $output, array('vhost' => 'localhost'));
         $client->connect();
 
         $frame = new Frame('CONNECTED', array('session' => '1234', 'server' => 'React/alpha'));
@@ -166,7 +271,7 @@ class ClientTest extends TestCase
         $input = $this->createInputStreamMock();
         $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
 
-        $client = new Client($input, $output, array('vhost' => 'localhost'));
+        $client = new Client($this->createLoopMock(), $input, $output, array('vhost' => 'localhost'));
         $client->on('connect', $this->expectCallableOnce());
         $client
             ->connect()
@@ -533,7 +638,7 @@ class ClientTest extends TestCase
         $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
 
         $client = $this->getMockBuilder('React\Stomp\Client')
-            ->setConstructorArgs(array($input, $output, array('vhost' => 'localhost')))
+            ->setConstructorArgs(array($this->createLoopMock(), $input, $output, array('vhost' => 'localhost')))
             ->setMethods(array('generateReceiptId'))
             ->getMock();
         $client
@@ -577,7 +682,7 @@ class ClientTest extends TestCase
 
     private function getConnectedClient(InputStreamInterface $input, OutputStreamInterface $output)
     {
-        $client = new Client($input, $output, array('vhost' => 'localhost'));
+        $client = new Client($this->createLoopMock(), $input, $output, array('vhost' => 'localhost'));
         $client->connect();
         $input->emit('frame', array(new Frame('CONNECTED')));
 
@@ -590,5 +695,10 @@ class ClientTest extends TestCase
             ->setConstructorArgs(array($this->getMock('React\Stomp\Protocol\Parser')))
             ->setMethods(array('isWritable', 'write', 'end', 'close'))
             ->getMock();
+    }
+
+    private function createLoopMock()
+    {
+        return $this->getMock('React\EventLoop\LoopInterface');
     }
 }
