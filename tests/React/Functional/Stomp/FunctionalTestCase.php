@@ -24,7 +24,7 @@ abstract class FunctionalTestCase extends \PHPUnit_Framework_TestCase
         $configFile = sprintf('%s/%s.php', realpath(__DIR__ . '/../../../../examples/config'), $provider);
 
         if (!file_exists($configFile)) {
-            $this->markTestSkipped(sprintf('Invalid STOMP_PROVIDER: No config file found at %s', $configFile));
+            throw new \RuntimeException(sprintf('Invalid STOMP_PROVIDER: No config file found at %s', $configFile));
         }
 
         $default = require $configFile;
