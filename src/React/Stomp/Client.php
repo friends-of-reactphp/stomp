@@ -56,11 +56,11 @@ class Client extends EventEmitter
 
         $this->connectionStatus = 'connecting';
 
+        $promise = new Deferred();
         $client = $this;
         $loop = $this->loop;
-        $promise = $this->connectDeferred;
 
-        $this->connectDeferred = new Deferred();
+        $this->connectDeferred = $promise;
         $this->connectDeferred->then(function () use ($client) {
             $client->setConnectionStatus('connected');
         });
