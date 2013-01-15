@@ -698,6 +698,6 @@ class ClientTest extends TestCase
 
     private function createLoopMock()
     {
-        return $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        return $this->getMock('React\EventLoop\LoopInterface');
     }
 }
