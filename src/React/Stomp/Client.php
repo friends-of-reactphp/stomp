@@ -58,21 +58,22 @@ class Client extends EventEmitter
 
         $client = $this;
         $loop = $this->loop;
+        $promise = $this->connectDeferred;
 
         $this->connectDeferred = new Deferred();
         $this->connectDeferred->then(function () use ($client) {
             $client->setConnectionStatus('connected');
         });
 
-        $timerSignature = $this->loop->addTimer($timeout, function () {
-            $this->connectDeferred->reject(new ConnectionException('Connection timeout'));
-            $this->connectDeferred = null;
-            $this->connectionStatus = 'not-connected';
+        $timerSignature = $this->loop->addTimer($timeout, function () use ($client, $promise) {
+            $promise->reject(new ConnectionException('Connection timeout'));
+            $client->resetConnectDeferred();
+            $client->setConnectionStatus('not-connected');
         });
 
-        $this->on('connect', function ($client) use ($timerSignature, $loop) {
+        $this->on('connect', function ($client) use ($timerSignature, $loop, $promise) {
             $loop->cancelTimer($timerSignature);
-            $this->connectDeferred->resolve($client);
+            $promise->resolve($client);
         });
 
         $frame = $this->packageCreator->connect(
@@ -146,6 +147,11 @@ class Client extends EventEmitter
 
         $this->connectDeferred = null;
         $this->connectionStatus = 'not-connected';
+    }
+
+    public function resetConnectDeferred()
+    {
+        $this->connectDeferred = null;
     }
 
     public function handleFrameEvent(Frame $frame)
