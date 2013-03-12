@@ -31,7 +31,7 @@ class IncomingPackageProcessor
 
         if ($this->state->isConnecting()) {
             if ('CONNECTED' !== $frame->command) {
-                throw new InvalidFrameException(sprintf("Received frame with command '%s', expected 'CONNECTED'."));
+                throw new InvalidFrameException(sprintf("Received frame with command '%s', expected 'CONNECTED'.", $frame->command));
             }
 
             $this->state->doneConnecting(
