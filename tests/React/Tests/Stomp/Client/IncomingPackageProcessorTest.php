@@ -23,6 +23,21 @@ class IncomingPackageProcessorTest extends \PHPUnit_Framework_TestCase
         $command = $packageProcessor->receiveFrame($frame);
     }
 
+    /**
+     * @test
+     * @expectedException React\Stomp\Exception\InvalidFrameException
+     * @expectedExceptionMessage Received frame with command 'FOO', expected 'CONNECTED'.
+     */
+    public function nonConnectedFrameAfterConnectingShouldResultInError()
+    {
+        $state = new State();
+        $state->startConnecting();
+        $packageProcessor = new IncomingPackageProcessor($state);
+
+        $frame = new Frame('FOO');
+        $command = $packageProcessor->receiveFrame($frame);
+    }
+
     /** @test */
     public function receiveFrameShouldReturnNoCommandsForMessageFrame()
     {
