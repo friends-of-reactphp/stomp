@@ -1,6 +1,10 @@
 CHANGELOG
 =========
 
+* 0.1.4 (2013-03-xx)
+
+  * Bugfix: Typo in missing `CONNECTED` frame error message (@fabpot)
+
 * 0.1.3 (2013-01-15)
 
   * Support for PHP >=5.3.3, <=5.3.8
