@@ -96,7 +96,7 @@ class ClientTest extends TestCase
         $input = $this->createInputStreamMock();
         $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
 
-        $client = new Client($this->createLoopMock(), $input, $output, array('vhost' => 'localhost'));
+        $client = new Client($this->createLoopMockWithConnectionTimer(), $input, $output, array('vhost' => 'localhost'));
         $client->on('connect', $this->expectCallableOnce());
         $client->connect();
 
@@ -184,16 +184,7 @@ class ClientTest extends TestCase
         $timeout = 30;
         $signature = uniqid('signature');
 
-        $loop = $this->createLoopMock();
-
-        $loop->expects($this->once())
-            ->method('addTimer')
-            ->with($this->equalTo($timeout), $this->isType('callable'))
-            ->will($this->returnValue($signature));
-
-        $loop->expects($this->once())
-            ->method('cancelTimer')
-            ->with($this->equalTo($signature));
+        $loop = $this->createLoopMockWithConnectionTimer();
 
         $client = new Client($loop, $input, $output, array('vhost' => 'localhost'));
         $client->connect($timeout)
@@ -240,7 +231,7 @@ class ClientTest extends TestCase
         $input = $this->createInputStreamMock();
         $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
 
-        $client = new Client($this->createLoopMock(), $input, $output, array('vhost' => 'localhost'));
+        $client = new Client($this->createLoopMockWithConnectionTimer(), $input, $output, array('vhost' => 'localhost'));
         $client->connect();
 
         $frame = new Frame('CONNECTED', array('session' => '1234', 'server' => 'React/alpha'));
@@ -255,7 +246,7 @@ class ClientTest extends TestCase
         $input = $this->createInputStreamMock();
         $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
 
-        $client = new Client($this->createLoopMock(), $input, $output, array('vhost' => 'localhost'));
+        $client = new Client($this->createLoopMockWithConnectionTimer(), $input, $output, array('vhost' => 'localhost'));
         $client->connect();
 
         $frame = new Frame('CONNECTED', array('session' => '1234', 'server' => 'React/alpha'));
@@ -271,7 +262,7 @@ class ClientTest extends TestCase
         $input = $this->createInputStreamMock();
         $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
 
-        $client = new Client($this->createLoopMock(), $input, $output, array('vhost' => 'localhost'));
+        $client = new Client($this->createLoopMockWithConnectionTimer(), $input, $output, array('vhost' => 'localhost'));
         $client->on('connect', $this->expectCallableOnce());
         $client
             ->connect()
@@ -682,7 +673,7 @@ class ClientTest extends TestCase
 
     private function getConnectedClient(InputStreamInterface $input, OutputStreamInterface $output)
     {
-        $client = new Client($this->createLoopMock(), $input, $output, array('vhost' => 'localhost'));
+        $client = new Client($this->createLoopMockWithConnectionTimer(), $input, $output, array('vhost' => 'localhost'));
         $client->connect();
         $input->emit('frame', array(new Frame('CONNECTED')));
 
@@ -700,5 +691,20 @@ class ClientTest extends TestCase
     private function createLoopMock()
     {
         return $this->getMock('React\EventLoop\LoopInterface');
+    }
+
+    private function createLoopMockWithConnectionTimer()
+    {
+        $loop = $this->createLoopMock();
+
+        $timer = $this->getMock('React\EventLoop\Timer\TimerInterface');
+        $timer->expects($this->once())
+            ->method('cancel');
+
+        $loop->expects($this->once())
+            ->method('addTimer')
+            ->will($this->returnValue($timer));
+
+        return $loop;
     }
 }

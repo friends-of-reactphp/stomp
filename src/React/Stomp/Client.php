@@ -65,14 +65,14 @@ class Client extends EventEmitter
             $client->setConnectionStatus('connected');
         });
 
-        $timerSignature = $this->loop->addTimer($timeout, function () use ($client, $promise) {
+        $timer = $this->loop->addTimer($timeout, function () use ($client, $promise) {
             $promise->reject(new ConnectionException('Connection timeout'));
             $client->resetConnectDeferred();
             $client->setConnectionStatus('not-connected');
         });
 
-        $this->on('connect', function ($client) use ($timerSignature, $loop, $promise) {
-            $loop->cancelTimer($timerSignature);
+        $this->on('connect', function ($client) use ($timer, $promise) {
+            $timer->cancel();
             $promise->resolve($client);
         });
 
