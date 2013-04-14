@@ -1,7 +1,7 @@
 CHANGELOG
 =========
 
-* 0.1.4 (2013-03-xx)
+* 0.1.4 (2013-04-15)
 
   * Bugfix: Typo in missing `CONNECTED` frame error message (@fabpot)
 
