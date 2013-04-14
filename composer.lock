@@ -1,5 +1,9 @@
 {
-    "hash": "503697b9f88d47253db5b2f989f82bc5",
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file"
+    ],
+    "hash": "37d5065759ae33cb24e07ab147ea8e5f",
     "packages": [
         {
             "name": "evenement/evenement",
@@ -24,7 +28,21 @@
                     "Evenement": "src"
                 }
             },
-            "time": "2012-05-30 15:01:08"
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Igor Wiedler",
+                    "email": "igor@wiedler.ch",
+                    "homepage": "http://wiedler.ch/igor/"
+                }
+            ],
+            "description": "Événement is a very simple event dispatching library for PHP 5.3",
+            "keywords": [
+                "event-dispatcher"
+            ],
+            "time": "2012-05-30 08:01:08"
         },
         {
             "name": "react/event-loop",
