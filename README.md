@@ -2,6 +2,14 @@
 
 STOMP bindings for React.
 
+STOMP is a messaging protocol. It is supported by most message queue brokers,
+such as [RabbitMQ](http://www.rabbitmq.com/),
+[Apollo](http://activemq.apache.org/apollo/) and many others.
+
+A message queue is used for asynchronous inter-process communication. This can
+be useful for workers, general long-running tasks, or communication between
+long-running daemons.
+
 [![Build Status](https://secure.travis-ci.org/reactphp/stomp.png?branch=master)](http://travis-ci.org/reactphp/stomp)
 
 ## Install
