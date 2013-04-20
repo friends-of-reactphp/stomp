@@ -20,8 +20,32 @@ class ConnectionTest extends TestCase
             ->will($this->returnValue($this->getDeferredPromiseMock()));
 
         $connection = new Connection($this->createLoopMock(), $connector);
+        $this->catchNoConnectionError($connection);
         $this->catchConnectionEvent($connection, 'connecting', $caughtEvent);
-        $connection->setState(Connection::STATE_CONNECTING);
+        $connection->connect();
+        $this->assertTrue($caughtEvent);
+
+        $this->assertEquals(Connection::STATE_CONNECTING, $connection->getState());
+        $this->assertNull($connection->socket);
+    }
+
+    /** @test */
+    public function connectorShouldConnectToSpecifiedHostAndPort()
+    {
+        $host = "stomp.neutron";
+        $port = 12345;
+
+        $connector = $this->getMock('React\SocketClient\ConnectorInterface');
+        $connector
+            ->expects($this->once())
+            ->method('create')
+            ->with($host, $port)
+            ->will($this->returnValue($this->getDeferredPromiseMock()));
+
+        $connection = new Connection($this->createLoopMock(), $connector);
+        $this->catchNoConnectionError($connection);
+        $this->catchConnectionEvent($connection, 'connecting', $caughtEvent);
+        $connection->connect($host, $port);
         $this->assertTrue($caughtEvent);
 
         $this->assertEquals(Connection::STATE_CONNECTING, $connection->getState());
@@ -40,8 +64,9 @@ class ConnectionTest extends TestCase
             ->will($this->returnValue($deferred->promise()));
 
         $connection = new Connection($this->createLoopMock(), $connector);
-        $connection->setState(Connection::STATE_CONNECTING);
+        $connection->connect();
 
+        $this->catchNoConnectionError($connection);
         $this->catchConnectionEvent($connection, 'connected', $caughtEvent);
 
         $deferred->resolve(fopen('php://temp', 'r'));
@@ -63,7 +88,7 @@ class ConnectionTest extends TestCase
             ->will($this->returnValue($deferred->promise()));
 
         $connection = new Connection($this->createLoopMock(), $connector);
-        $connection->setState(Connection::STATE_CONNECTING);
+        $connection->connect();
 
         $this->catchConnectionError($connection, $caughtError);
 
@@ -75,11 +100,78 @@ class ConnectionTest extends TestCase
         $this->assertEquals($error, $caughtError);
     }
 
+
+    /** @test */
+    public function itShouldEmitErrorOnSocketDisconnection()
+    {
+        $connection = $this->getConnectedConnection();
+
+        $this->catchConnectionError($connection, $caughtError);
+        $connection->socket->emit('end');
+        $this->assertInstanceOf('React\Stomp\Exception\IoException', $caughtError);
+        $this->assertEquals('Connection broken', $caughtError->getMessage());
+
+        $this->assertNull($connection->socket);
+        $this->assertEquals(Connection::STATE_DISCONNECTED, $connection->getState());
+    }
+
+
+    /** @test */
+    public function itShouldDisconnectSocketOnDisconnection()
+    {
+        $connection = $this->getConnectedConnection();
+
+        $mock = $this->getMockBuilder('React\Socket\Connection')
+            ->disableOriginalConstructor()
+            ->getMock();
+        $mock->expects($this->once())
+            ->method('close');
+
+        $connection->socket = $mock;
+
+        $this->catchNoConnectionError($connection);
+        $this->catchConnectionEvent($connection, 'disconnecting', $caughtDisconnecting);
+        $this->catchConnectionEvent($connection, 'disconnected', $caughtDisconnected);
+
+        $connection->disconnect();
+
+        $this->assertTrue($caughtDisconnecting);
+        $this->assertTrue($caughtDisconnected);
+
+        $this->assertNull($connection->socket);
+        $this->assertEquals(Connection::STATE_DISCONNECTED, $connection->getState());
+    }
+
+    private function getConnectedConnection()
+    {
+        $deferred = new Deferred();
+
+        $connector = $this->getMock('React\SocketClient\ConnectorInterface');
+        $connector
+            ->expects($this->once())
+            ->method('create')
+            ->will($this->returnValue($deferred->promise()));
+
+        $connection = new Connection($this->createLoopMock(), $connector);
+        $connection->connect();
+
+        $deferred->resolve(fopen('php://temp', 'r'));
+
+        return $connection;
+    }
+
     private function catchConnectionError($connection, &$caughtError)
     {
         $caughtError = null;
         $connection->on('error', function ($error) use (&$caughtError) {
             $caughtError = $error;
+        });
+    }
+
+    private function catchNoConnectionError($connection)
+    {
+        $connection->on('error', function ($error) {
+            $this->fail(sprintf('Unexpected error caught : %s', $error->getMessage()));
         });
     }
 

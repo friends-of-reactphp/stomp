@@ -53,7 +53,7 @@ class Connection extends EventEmitter
     }
 
     // short cut to setState(self::STATE_CONNECTING)
-    public function connect($host, $port)
+    public function connect($host = 'localhost', $port = 61613)
     {
         return $this->setState(self::STATE_CONNECTING, $host, $port);
     }
@@ -64,7 +64,7 @@ class Connection extends EventEmitter
         return $this->setState(self::STATE_DISCONNECTING);
     }
 
-    public function setState($state)
+    private function setState($state)
     {
         if ($this->state === $state) {
             return;
@@ -101,7 +101,7 @@ class Connection extends EventEmitter
     private function closeSocketConnection()
     {
         $this->emit('disconnecting', array($this));
-        $this->socket->removeListener($this->disconnectionListener);
+        $this->socket->removeListener('end', $this->disconnectionListener);
         $this->disconnectionListener = null;
         $this->socket->close();
         $this->setState(self::STATE_DISCONNECTED);
@@ -128,12 +128,12 @@ class Connection extends EventEmitter
         $connection = $this;
         // remove this event on manual diconnection
         $this->disconnectionListener = $this->socket->on('end', function () use ($connection) {
-            $connection->setState($connection::STATE_DISCONNECTED, new \React\Socket\ConnectionException('Connection borken'));
+            $connection->setState($connection::STATE_DISCONNECTED, new IoException('Connection broken'));
         });
     }
 
     // connection
-    private function doSocketConnection($host = 'localhost', $port = 61613)
+    private function doSocketConnection($host, $port)
     {
         $connection = $this;
 
