@@ -122,8 +122,8 @@ class IncomingPackageProcessorTest extends \PHPUnit_Framework_TestCase
         $n = mt_rand(4, 8);
 
         $processor->on('error', function ($error) use (&$caughtFrames) {
-            $this->assertInstanceOf('React\Stomp\Exception\UnexpectedFrameException', $error);
-            $caughtFrames[] = $error->getFrame();
+            $this->assertInstanceOf('React\Stomp\Exception\InvalidFrameException', $error);
+            $caughtFrames[] = $error->getErrorFrame();
         });
 
         for ($i = 0; $i < $n; $i++) {

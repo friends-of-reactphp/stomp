@@ -5,7 +5,6 @@ namespace React\Stomp\Client;
 use React\Stomp\Protocol\Frame;
 use React\Stomp\Exception\ServerErrorException;
 use React\Stomp\Exception\InvalidFrameException;
-use React\Stomp\Exception\UnexpectedFrameException;
 use Evenement\EventEmitter;
 
 /**
@@ -67,7 +66,7 @@ class IncomingPackageProcessor extends EventEmitter
         if (!$this->state->isDisconnected()) {
             $this->emit('frame', array($frame));
         } else {
-            $this->emit('error', array(new UnexpectedFrameException($frame)));
+            $this->emit('error', array(new InvalidFrameException($frame, sprintf('Unexpected frame %s received, STOMP connection is disconnected', $frame->command))));
         }
     }
 }
