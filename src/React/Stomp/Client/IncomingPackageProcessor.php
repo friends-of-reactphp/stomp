@@ -3,13 +3,18 @@
 namespace React\Stomp\Client;
 
 use React\Stomp\Protocol\Frame;
-use React\Stomp\Client\Command\CloseCommand;
-use React\Stomp\Client\Command\ConnectionEstablishedCommand;
-use React\Stomp\Client\Command\NullCommand;
 use React\Stomp\Exception\ServerErrorException;
 use React\Stomp\Exception\InvalidFrameException;
+use React\Stomp\Exception\UnexpectedFrameException;
+use Evenement\EventEmitter;
 
-class IncomingPackageProcessor
+/**
+ * @event frame
+ * @event error
+ * @event connected
+ * @event disconnected
+ */
+class IncomingPackageProcessor extends EventEmitter
 {
     private $state;
 
@@ -22,11 +27,14 @@ class IncomingPackageProcessor
      * Feed frame from the server
      *
      * @return An array of commands to be executed by the caller.
+     *
+     * @throws ServerErrorException|InvalidFrameException In case of an exception, the STOMP connection should be considered close
      */
     public function receiveFrame(Frame $frame)
     {
         if ('ERROR' === $frame->command) {
-            throw new ServerErrorException($frame);
+            $this->emit('error', array(new ServerErrorException($frame)));
+            return;
         }
 
         if ($this->state->isConnecting()) {
@@ -39,7 +47,9 @@ class IncomingPackageProcessor
                 $frame->getHeader('server')
             );
 
-            return new ConnectionEstablishedCommand();
+            $this->emit('connected', array($frame));
+
+            return;
         }
 
         if ('CONNECTED' === $frame->command) {
@@ -49,11 +59,15 @@ class IncomingPackageProcessor
         if ($this->state->isDisconnecting()) {
             if ('RECEIPT' === $frame->command && $this->state->isDisconnectionReceipt($frame->getHeader('receipt-id'))) {
                 $this->state->doneDisconnecting();
-
-                return new CloseCommand();
+                $this->emit('disconnected', array($frame));
+                return;
             }
         }
 
-        return new NullCommand();
+        if (!$this->state->isDisconnected()) {
+            $this->emit('frame', array($frame));
+        } else {
+            $this->emit('error', array(new UnexpectedFrameException($frame)));
+        }
     }
 }

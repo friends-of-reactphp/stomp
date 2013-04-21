@@ -4,31 +4,65 @@ namespace React\Stomp\Client;
 
 class State
 {
-    const STATUS_INIT = 0;
-    const STATUS_CONNECTING = 1;
-    const STATUS_CONNECTED = 2;
-    const STATUS_DISCONNECTING = 3;
-    const STATUS_DISCONNECTED = 4;
+    const STATUS_CONNECTING = 0;
+    const STATUS_CONNECTED = 1;
+    const STATUS_DISCONNECTING = 2;
+    const STATUS_DISCONNECTED = 3;
 
-    public $status = self::STATUS_INIT;
     public $session;
     public $server;
-    public $subscriptions;
     public $receipt;
+    public $subscriptions;
 
-    public function __construct()
+    private $status;
+
+    private $transitions = array(
+        self::STATUS_DISCONNECTED => array(
+            self::STATUS_CONNECTING => 'startConnecting',
+        ),
+        self::STATUS_CONNECTING => array(
+            self::STATUS_CONNECTED => 'doneConnecting',
+            self::STATUS_DISCONNECTED => 'errorConnecting',
+        ),
+        self::STATUS_CONNECTED => array(
+            self::STATUS_DISCONNECTING => 'startDisconnecting',
+            self::STATUS_DISCONNECTED => 'connectionError',
+        ),
+        self::STATUS_DISCONNECTING => array(
+            self::STATUS_DISCONNECTED => 'doneDisconnecting',
+        )
+    );
+
+    public function __construct($status = self::STATUS_DISCONNECTED)
     {
+        $this->status = $status;
         $this->subscriptions = new SubscriptionBag();
+    }
+
+    public function setStatus($status)
+    {
+        if (!isset($this->transitions[$this->status]) || !isset($this->transitions[$this->status][$status])) {
+            throw new \RuntimeException(sprintf('Unexpected STOMP connection transition from %s to %s', $this->status, $status));
+        }
+
+        $method = $this->transitions[$this->status][$status];
+        $args = func_get_args();
+        array_shift($args);
+
+        $this->status = $status;
+
+        return call_user_func_array(array($this, $method), $args);
+    }
+
+    public function doneDisconnecting()
+    {
+        $this->receipt = $this->session = $this->server = null;
+        $this->status = self::STATUS_DISCONNECTED;
     }
 
     public function startConnecting()
     {
         $this->status = self::STATUS_CONNECTING;
-    }
-
-    public function isConnecting()
-    {
-        return self::STATUS_CONNECTING === $this->status;
     }
 
     public function doneConnecting($session, $server)
@@ -44,6 +78,32 @@ class State
         $this->receipt = $receipt;
     }
 
+    public function errorConnecting()
+    {
+        $this->status = self::STATUS_DISCONNECTED;
+    }
+
+    public function connectionError()
+    {
+        $this->session = $this->server = null;
+        $this->status = self::STATUS_DISCONNECTED;
+    }
+
+    public function isConnecting()
+    {
+        return self::STATUS_CONNECTING === $this->status;
+    }
+
+    public function isConnected()
+    {
+        return self::STATUS_CONNECTED === $this->status;
+    }
+
+    public function isDisconnected()
+    {
+        return self::STATUS_DISCONNECTED === $this->status;
+    }
+
     public function isDisconnecting()
     {
         return self::STATUS_DISCONNECTING === $this->status;
@@ -52,10 +112,5 @@ class State
     public function isDisconnectionReceipt($receipt)
     {
         return $this->receipt === $receipt;
-    }
-
-    public function doneDisconnecting()
-    {
-        $this->status = self::STATUS_DISCONNECTED;
     }
 }
