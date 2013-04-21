@@ -4,7 +4,7 @@ namespace React\Stomp\Exception;
 
 use React\Stomp\Protocol\Frame;
 
-class InvalidFrameException extends ProcessingException
+class UnexpectedFrameException extends ProcessingException
 {
     public function __construct(Frame $frame, $message)
     {

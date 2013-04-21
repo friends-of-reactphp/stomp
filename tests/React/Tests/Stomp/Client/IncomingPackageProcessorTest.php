@@ -31,7 +31,7 @@ class IncomingPackageProcessorTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @test
-     * @expectedException React\Stomp\Exception\InvalidFrameException
+     * @expectedException React\Stomp\Exception\UnexpectedFrameException
      * @expectedExceptionMessage Received frame with command 'MESSAGE', expected 'CONNECTED'.
      */
     public function itCanOnlyReceiveAConnectedFrameWhenConnecting()
@@ -69,7 +69,7 @@ class IncomingPackageProcessorTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      * @dataProvider provideNotConnectingStatus
-     * @expectedException React\Stomp\Exception\InvalidFrameException
+     * @expectedException React\Stomp\Exception\UnexpectedFrameException
      * @expectedExceptionMessage Received 'CONNECTED' frame outside a connecting window.
      */
     public function itShouldThrowAnExceptionWhenNotConnectingOnConnectedFrame($status)
@@ -122,7 +122,7 @@ class IncomingPackageProcessorTest extends \PHPUnit_Framework_TestCase
         $n = mt_rand(4, 8);
 
         $processor->on('error', function ($error) use (&$caughtFrames) {
-            $this->assertInstanceOf('React\Stomp\Exception\InvalidFrameException', $error);
+            $this->assertInstanceOf('React\Stomp\Exception\UnexpectedFrameException', $error);
             $caughtFrames[] = $error->getErrorFrame();
         });
 

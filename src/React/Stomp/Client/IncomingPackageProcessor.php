@@ -4,7 +4,7 @@ namespace React\Stomp\Client;
 
 use React\Stomp\Protocol\Frame;
 use React\Stomp\Exception\ServerErrorException;
-use React\Stomp\Exception\InvalidFrameException;
+use React\Stomp\Exception\UnexpectedFrameException;
 use Evenement\EventEmitter;
 
 /**
@@ -27,7 +27,7 @@ class IncomingPackageProcessor extends EventEmitter
      *
      * @return An array of commands to be executed by the caller.
      *
-     * @throws ServerErrorException|InvalidFrameException In case of an exception, the STOMP connection should be considered close
+     * @throws ServerErrorException|UnexpectedFrameException In case of an exception, the STOMP connection should be considered close
      */
     public function receiveFrame(Frame $frame)
     {
@@ -38,7 +38,7 @@ class IncomingPackageProcessor extends EventEmitter
 
         if ($this->state->isConnecting()) {
             if ('CONNECTED' !== $frame->command) {
-                throw new InvalidFrameException($frame, sprintf("Received frame with command '%s', expected 'CONNECTED'.", $frame->command));
+                throw new UnexpectedFrameException($frame, sprintf("Received frame with command '%s', expected 'CONNECTED'.", $frame->command));
             }
 
             $this->state->doneConnecting(
@@ -52,7 +52,7 @@ class IncomingPackageProcessor extends EventEmitter
         }
 
         if ('CONNECTED' === $frame->command) {
-            throw new InvalidFrameException($frame, sprintf("Received 'CONNECTED' frame outside a connecting window."));
+            throw new UnexpectedFrameException($frame, sprintf("Received 'CONNECTED' frame outside a connecting window."));
         }
 
         if ($this->state->isDisconnecting()) {
@@ -66,7 +66,7 @@ class IncomingPackageProcessor extends EventEmitter
         if (!$this->state->isDisconnected()) {
             $this->emit('frame', array($frame));
         } else {
-            $this->emit('error', array(new InvalidFrameException($frame, sprintf('Unexpected frame %s received, STOMP connection is disconnected', $frame->command))));
+            $this->emit('error', array(new UnexpectedFrameException($frame, sprintf('Unexpected frame %s received, STOMP connection is disconnected', $frame->command))));
         }
     }
 }
