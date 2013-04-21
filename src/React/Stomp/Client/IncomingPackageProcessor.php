@@ -39,7 +39,7 @@ class IncomingPackageProcessor extends EventEmitter
 
         if ($this->state->isConnecting()) {
             if ('CONNECTED' !== $frame->command) {
-                throw new InvalidFrameException(sprintf("Received frame with command '%s', expected 'CONNECTED'.", $frame->command));
+                throw new InvalidFrameException($frame, sprintf("Received frame with command '%s', expected 'CONNECTED'.", $frame->command));
             }
 
             $this->state->doneConnecting(
@@ -53,7 +53,7 @@ class IncomingPackageProcessor extends EventEmitter
         }
 
         if ('CONNECTED' === $frame->command) {
-            throw new InvalidFrameException(sprintf("Received 'CONNECTED' frame outside a connecting window."));
+            throw new InvalidFrameException($frame, sprintf("Received 'CONNECTED' frame outside a connecting window."));
         }
 
         if ($this->state->isDisconnecting()) {
