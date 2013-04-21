@@ -1,11 +1,10 @@
 <?php
 
-namespace React\Tests\Stomp;
+namespace React\Tests\Stomp\Io;
 
 use React\Stomp\Io\InputStream;
 use React\Stomp\Protocol\Frame;
 use React\Stomp\Protocol\Parser;
-use React\Tests\Stomp\Constraint\FrameIsEqual;
 use React\Tests\Stomp\TestCase;
 
 class InputStreamTest extends TestCase
