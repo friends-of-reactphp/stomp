@@ -21,9 +21,7 @@ class ConnectionTest extends TestCase
 
         $connection = new Connection($this->createLoopMock(), $connector);
         $this->catchNoConnectionError($connection);
-        $this->catchConnectionEvent($connection, 'connecting', $caughtEvent);
         $connection->connect();
-        $this->assertTrue($caughtEvent);
 
         $this->assertEquals(Connection::STATE_CONNECTING, $connection->getState());
         $this->assertNull($connection->socket);
@@ -44,9 +42,7 @@ class ConnectionTest extends TestCase
 
         $connection = new Connection($this->createLoopMock(), $connector);
         $this->catchNoConnectionError($connection);
-        $this->catchConnectionEvent($connection, 'connecting', $caughtEvent);
         $connection->connect($host, $port);
-        $this->assertTrue($caughtEvent);
 
         $this->assertEquals(Connection::STATE_CONNECTING, $connection->getState());
         $this->assertNull($connection->socket);
@@ -67,7 +63,7 @@ class ConnectionTest extends TestCase
         $connection->connect();
 
         $this->catchNoConnectionError($connection);
-        $this->catchConnectionEvent($connection, 'connected', $caughtEvent);
+        $this->catchConnectionEvent($connection, 'connect', $caughtEvent);
 
         $deferred->resolve(fopen('php://temp', 'r'));
 
@@ -90,7 +86,7 @@ class ConnectionTest extends TestCase
         $connection = new Connection($this->createLoopMock(), $connector);
         $connection->connect();
 
-        $this->catchConnectionError($connection, $caughtError);
+        $this->catchDisconnected($connection, $caughtError);
 
         $error = new ConnectionException('Connection failure');
         $deferred->reject($error);
@@ -100,13 +96,66 @@ class ConnectionTest extends TestCase
         $this->assertEquals($error, $caughtError);
     }
 
+    /** @test */
+    public function thePromiseReturnedByConnectOnResolveShouldProvideTheConnectionAsArgument()
+    {
+        $deferred = new Deferred();
+
+        $connector = $this->getMock('React\SocketClient\ConnectorInterface');
+        $connector
+            ->expects($this->once())
+            ->method('create')
+            ->will($this->returnValue($deferred->promise()));
+
+        $caughtConnection = null;
+
+        $connection = new Connection($this->createLoopMock(), $connector);
+        $connection
+            ->connect()
+            ->then(function ($connection) use (&$caughtConnection) {
+                $caughtConnection = $connection;
+            }, $this->expectCallableNever());
+
+        $deferred->resolve(fopen('php://temp', 'r'));
+
+        $this->assertEquals($connection, $caughtConnection);
+    }
+
+    /** @test */
+    public function thePromiseReturnedByConnectOnRejectShouldProvideTheErrorAsArgument()
+    {
+        $deferred = new Deferred();
+
+        $connector = $this->getMock('React\SocketClient\ConnectorInterface');
+        $connector
+            ->expects($this->once())
+            ->method('create')
+            ->will($this->returnValue($deferred->promise()));
+
+        $caughtError = null;
+        $error = new \Exception('woops');
+
+        $connection = new Connection($this->createLoopMock(), $connector);
+        $connection
+            ->connect()
+            ->then(
+                $this->expectCallableNever(),
+                function ($error) use (&$caughtError) {
+                    $caughtError = $error;
+                }
+            );
+
+        $deferred->reject($error);
+
+        $this->assertEquals($error, $caughtError);
+    }
 
     /** @test */
     public function itShouldEmitErrorOnSocketDisconnection()
     {
         $connection = $this->getConnectedConnection();
 
-        $this->catchConnectionError($connection, $caughtError);
+        $this->catchDisconnected($connection, $caughtError);
         $connection->socket->emit('end');
         $this->assertInstanceOf('React\Stomp\Exception\IoException', $caughtError);
         $this->assertEquals('Connection broken', $caughtError->getMessage());
@@ -130,12 +179,10 @@ class ConnectionTest extends TestCase
         $connection->socket = $mock;
 
         $this->catchNoConnectionError($connection);
-        $this->catchConnectionEvent($connection, 'disconnecting', $caughtDisconnecting);
-        $this->catchConnectionEvent($connection, 'disconnected', $caughtDisconnected);
+        $this->catchConnectionEvent($connection, 'disconnect', $caughtDisconnected);
 
         $connection->disconnect();
 
-        $this->assertTrue($caughtDisconnecting);
         $this->assertTrue($caughtDisconnected);
 
         $this->assertNull($connection->socket);
@@ -160,10 +207,11 @@ class ConnectionTest extends TestCase
         return $connection;
     }
 
-    private function catchConnectionError($connection, &$caughtError)
+    private function catchDisconnected($connection, &$caughtError)
     {
         $caughtError = null;
-        $connection->on('error', function ($error) use (&$caughtError) {
+        $connection->on('disconnected', function ($conn, $error) use ($connection, &$caughtError) {
+            $this->assertEquals($connection, $conn);
             $caughtError = $error;
         });
     }

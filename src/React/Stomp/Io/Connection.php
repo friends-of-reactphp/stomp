@@ -7,12 +7,15 @@ use React\Socket\Connection as Socket;
 use React\SocketClient\ConnectorInterface;
 use React\EventLoop\LoopInterface;
 use React\Stomp\Exception\IoException;
+use React\Promise\Deferred;
+use React\Dns\Resolver\Factory as ResolverFactory;
+use React\SocketClient\Connector;
 
 /**
+ * @emit error
  * @emit disconnected
- * @emit connecting
- * @emit connected
- * @emit disconnecting
+ * @emit disconnect
+ * @emit connect
  */
 class Connection extends EventEmitter
 {
@@ -45,7 +48,7 @@ class Connection extends EventEmitter
         ),
     );
 
-    public function __construct(LoopInterface $loop, ConnectorInterface $connector)//, InputStreamInterface $input, OutputStreamInterface $output)
+    public function __construct(LoopInterface $loop, ConnectorInterface $connector)
     {
         $this->loop = $loop;
         $this->connector = $connector;
@@ -71,6 +74,7 @@ class Connection extends EventEmitter
         }
 
         if (!isset($this->transitions[$this->state]) || !isset($this->transitions[$this->state][$state])) {
+            // may throw the exception here ?
             $error = new IoException(sprintf(
                 'Connection transition from %s to %s is not handled', $this->state, $state
             ));
@@ -97,10 +101,17 @@ class Connection extends EventEmitter
         return $this->state;
     }
 
+    public static function create(LoopInterface $loop)
+    {
+        $dnsResolverFactory = new ResolverFactory();
+        $dns = $dnsResolverFactory->createCached('8.8.8.8', $loop);
+
+        return new static($loop, new Connector($loop, $dns));
+    }
+
     // when developer ask for disconnection
     private function closeSocketConnection()
     {
-        $this->emit('disconnecting', array($this));
         $this->socket->removeListener('end', $this->disconnectionListener);
         $this->disconnectionListener = null;
         $this->socket->close();
@@ -109,23 +120,24 @@ class Connection extends EventEmitter
 
     private function doneSocketDisconnection()
     {
-        $this->emit('disconnected', array($this));
+        $this->emit('disconnect', array($this));
         $this->socket = null;
     }
 
     // unable to connect / connection broken
     private function errorSocketConnection(\Exception $error)
     {
-        $this->emit('error', array($error));
+        $this->emit('disconnected', array($this, $error));
         $this->socket = null;
     }
 
     private function doneSocketConnection($stream)
     {
         $this->socket = new Socket($stream, $this->loop);
-        $this->emit('connected', array($this));
+        $this->emit('connect', array($this));
 
         $connection = $this;
+
         // remove this event on manual diconnection
         $this->disconnectionListener = $this->socket->on('end', function () use ($connection) {
             $connection->setState($connection::STATE_DISCONNECTED, new IoException('Connection broken'));
@@ -136,15 +148,18 @@ class Connection extends EventEmitter
     private function doSocketConnection($host, $port)
     {
         $connection = $this;
+        $deferred = new Deferred();
 
-        $this->emit('connecting', array($this));
-
-        return $this->connector
+        $this->connector
             ->create($host, $port)
-            ->then(function ($stream) use ($connection) {
+            ->then(function ($stream) use ($deferred, $connection) {
                 $connection->setState($connection::STATE_CONNECTED, $stream);
-            }, function ($error) use ($connection) {
+                $deferred->resolve($connection);
+            }, function ($error) use ($deferred, $connection) {
                 $connection->setState($connection::STATE_DISCONNECTED, $error);
+                $deferred->reject($error);
             });
+
+        return $deferred->promise();
     }
 }
