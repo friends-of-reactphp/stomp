@@ -13,11 +13,9 @@ class OutgoingPackageCreator
         $this->state = $state;
     }
 
-    public function connect($host, $login = null, $passcode = null)
+    public function connect($vhost, $login = null, $passcode = null)
     {
-        $this->state->startConnecting();
-
-        $headers = array('accept-version' => '1.1', 'host' => $host);
+        $headers = array('accept-version' => '1.1', 'host' => $vhost);
         if (null !== $login || null !== $passcode) {
             $headers = array_merge($headers, array(
                 'login'     => (string) $login,
@@ -85,8 +83,6 @@ class OutgoingPackageCreator
 
     public function disconnect($receipt, array $headers = array())
     {
-        $this->state->startDisconnecting($receipt);
-
         $headers['receipt'] = $receipt;
         return new Frame('DISCONNECT', $headers);
     }

@@ -5,7 +5,6 @@ namespace React\Tests\Stomp\Client;
 use React\Stomp\Client\OutgoingPackageCreator;
 use React\Stomp\Client\State;
 use React\Stomp\Protocol\Frame;
-use React\Tests\Stomp\Constraint\FrameEquals;
 
 class OutgoingPackageCreatorTest extends \PHPUnit_Framework_TestCase
 {
@@ -17,12 +16,9 @@ class OutgoingPackageCreatorTest extends \PHPUnit_Framework_TestCase
         $state = new State();
         $packageCreator = new OutgoingPackageCreator($state);
 
-        $this->assertSame(State::STATUS_INIT, $state->status);
-
         $frame = $packageCreator->connect('stomp.github.org');
 
         $this->assertFrameEquals($expectedFrame, $frame);
-        $this->assertSame(State::STATUS_CONNECTING, $state->status);
     }
 
     /** @test */
@@ -165,12 +161,9 @@ class OutgoingPackageCreatorTest extends \PHPUnit_Framework_TestCase
         $state = new State();
         $packageCreator = new OutgoingPackageCreator($state);
 
-        $this->assertSame(State::STATUS_INIT, $state->status);
-
         $frame = $packageCreator->disconnect('foo');
 
         $this->assertFrameEquals($expectedFrame, $frame);
-        $this->assertSame(State::STATUS_DISCONNECTING, $state->status);
     }
 
     private function assertFrameEquals(Frame $expected, Frame $frame)

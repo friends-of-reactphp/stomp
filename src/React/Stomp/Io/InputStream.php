@@ -5,13 +5,9 @@ namespace React\Stomp\Io;
 use React\Stomp\Protocol\Parser;
 use React\Stream\WritableStream;
 
-// $parser = new Parser();
-// $input = new InputStream($parser);
-// $input->on('frame', function ($frame) {
-//     lulz
-// });
-// $conn->pipe($input);
-
+/**
+ * @event frame
+ */
 class InputStream extends WritableStream implements InputStreamInterface
 {
     private $buffer = '';
