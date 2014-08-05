@@ -56,24 +56,25 @@ class Client extends EventEmitter
 
         $this->connectionStatus = 'connecting';
 
-        $promise = new Deferred();
+        $this->connectDeferred = $deferred = new Deferred;
+        $promise = $deferred->promise();
+
         $client = $this;
         $loop = $this->loop;
 
-        $this->connectDeferred = $promise;
-        $this->connectDeferred->then(function () use ($client) {
-            $client->setConnectionStatus('connected');
+        $newPromise = $promise->then(function(){
+            $this->setConnectionStatus('connected');
         });
 
-        $timer = $this->loop->addTimer($timeout, function () use ($client, $promise) {
-            $promise->reject(new ConnectionException('Connection timeout'));
-            $client->resetConnectDeferred();
-            $client->setConnectionStatus('not-connected');
+        $timer = $this->loop->addTimer($timeout, function () use ($deferred) {
+            $deferred->reject(new ConnectionException('Connection timeout'));
+            $this->resetConnectDeferred();
+            $this->setConnectionStatus('not-connected');
         });
 
-        $this->on('connect', function ($client) use ($timer, $promise) {
+        $this->on('connect', function ($client) use ($timer, $deferred) {
             $timer->cancel();
-            $promise->resolve($client);
+            $deferred->resolve($client);
         });
 
         $frame = $this->packageCreator->connect(
@@ -83,7 +84,7 @@ class Client extends EventEmitter
         );
         $this->output->sendFrame($frame);
 
-        return $this->connectDeferred->promise();
+        return $newPromise;
     }
 
     public function send($destination, $body, array $headers = array())
