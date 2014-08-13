@@ -63,7 +63,7 @@ class Client extends EventEmitter
         $loop = $this->loop;
 
         $promise->then(function($client) {
-            $this->setConnectionStatus('connected');
+            $client->setConnectionStatus('connected');
         });
 
         $timer = $this->loop->addTimer($timeout, function () use ($deferred, $client) {
