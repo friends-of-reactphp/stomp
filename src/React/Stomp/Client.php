@@ -4,6 +4,7 @@ namespace React\Stomp;
 
 use Evenement\EventEmitter;
 use React\Promise\Deferred;
+use React\Promise\PromiseInterface;
 use React\Stomp\Client\IncomingPackageProcessor;
 use React\Stomp\Client\OutgoingPackageCreator;
 use React\Stomp\Client\State;
@@ -31,7 +32,12 @@ class Client extends EventEmitter
     private $subscriptions = array();
     private $acknowledgements = array();
     private $options = array();
+
+    /** @var Deferred */
     private $connectDeferred;
+
+    /** @var PromiseInterface */
+    private $connectPromise;
 
     public function __construct(LoopInterface $loop, InputStreamInterface $input, OutputStreamInterface $output, array $options)
     {
@@ -50,30 +56,24 @@ class Client extends EventEmitter
 
     public function connect($timeout = 5)
     {
-        if ($this->connectDeferred) {
-            return $this->connectDeferred->promise();
+        if ($this->connectPromise) {
+            return $this->connectPromise;
         }
 
         $this->connectionStatus = 'connecting';
 
-        $promise = new Deferred();
+        $deferred = $this->connectDeferred = new Deferred();
         $client = $this;
-        $loop = $this->loop;
 
-        $this->connectDeferred = $promise;
-        $this->connectDeferred->promise()->then(function () use ($client) {
-            $client->setConnectionStatus('connected');
-        });
-
-        $timer = $this->loop->addTimer($timeout, function () use ($client, $promise) {
-            $promise->reject(new ConnectionException('Connection timeout'));
+        $timer = $this->loop->addTimer($timeout, function () use ($client, $deferred) {
+            $deferred->reject(new ConnectionException('Connection timeout'));
             $client->resetConnectDeferred();
             $client->setConnectionStatus('not-connected');
         });
 
-        $this->on('connect', function ($client) use ($timer, $promise) {
+        $this->on('connect', function ($client) use ($timer, $deferred) {
             $timer->cancel();
-            $promise->resolve($client);
+            $deferred->resolve($client);
         });
 
         $frame = $this->packageCreator->connect(
@@ -83,7 +83,10 @@ class Client extends EventEmitter
         );
         $this->output->sendFrame($frame);
 
-        return $this->connectDeferred->promise();
+        return $this->connectPromise = $deferred->promise()->then(function () use ($client) {
+            $client->setConnectionStatus('connected');
+            return $client;
+        });
     }
 
     public function send($destination, $body, array $headers = array())
@@ -146,12 +149,14 @@ class Client extends EventEmitter
         $this->output->sendFrame($frame);
 
         $this->connectDeferred = null;
+        $this->connectPromise = null;
         $this->connectionStatus = 'not-connected';
     }
 
     public function resetConnectDeferred()
     {
         $this->connectDeferred = null;
+        $this->connectPromise = null;
     }
 
     public function handleFrameEvent(Frame $frame)
@@ -164,6 +169,7 @@ class Client extends EventEmitter
             if ($this->connectionStatus === 'connecting') {
                 $this->connectDeferred->reject($e);
                 $this->connectDeferred = null;
+                $this->connectPromise = null;
                 $this->connectionStatus = 'not-connected';
             }
         }
@@ -251,4 +257,5 @@ class Client extends EventEmitter
     {
         return mt_rand();
     }
+
 }
