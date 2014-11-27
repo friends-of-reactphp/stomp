@@ -12,9 +12,9 @@ env:
 
 before_script:
   - sh -c " if [ '$STOMP_PROVIDER' = 'apollo' ]; then
-              wget http://apache.opensourcemirror.com/activemq/activemq-apollo/1.6/apache-apollo-1.6-unix-distro.tar.gz;
-              tar xzf apache-apollo-1.6-unix-distro.tar.gz;
-              ./apache-apollo-1.6/bin/apollo create apollo;
+              wget http://mirror.catn.com/pub/apache/activemq/activemq-apollo/1.7/apache-apollo-1.7-unix-distro.tar.gz;
+              tar xzf apache-apollo-1.7-unix-distro.tar.gz;
+              ./apache-apollo-1.7/bin/apollo create apollo;
               ./apollo/bin/apollo-broker-service start;
               sleep 6;
             fi"
