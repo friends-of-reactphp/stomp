@@ -4,7 +4,7 @@
     "keywords": ["stomp", "rabbitmq"],
     "license": "MIT",
     "require": {
-        "php": ">=5.3.2",
+        "php": ">=5.4",
         "evenement/evenement": "~2.0",
         "react/socket": "0.4.*",
         "react/promise": "~1.0"
