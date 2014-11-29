@@ -1,9 +1,9 @@
 CHANGELOG
 =========
 
-* 0.2.0 (2013-04-xx)
+* 0.2.0 (2014-11-29)
 
-  * Bump react deps to 0.3.*
+  * Bump react deps to 0.4.* (@Easen)
 
 * 0.1.4 (2013-04-15)
 
