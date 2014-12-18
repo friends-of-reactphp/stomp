@@ -10,7 +10,7 @@ A message queue is used for asynchronous inter-process communication. This can
 be useful for workers, general long-running tasks, or communication between
 long-running daemons.
 
-[![Build Status](https://secure.travis-ci.org/reactphp/stomp.png?branch=master)](http://travis-ci.org/reactphp/stomp)
+[![Build Status](https://secure.travis-ci.org/reactphp/stomp.png?branch=master)](http://travis-ci.org/reactphp/stomp) [![Code Climate](https://codeclimate.com/github/reactphp/stomp/badges/gpa.svg)](https://codeclimate.com/github/reactphp/stomp)
 
 ## Install
 
