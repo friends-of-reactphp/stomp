@@ -2,7 +2,7 @@
 
 namespace React\Functional\Stomp;
 
-use React\Promise\When;
+use React\Promise;
 
 class AckTest extends FunctionalTestCase
 {
@@ -15,10 +15,10 @@ class AckTest extends FunctionalTestCase
 
         $counter = 0;
 
-        When::all(array(
-                $client1->connect(),
-                $client2->connect(),
-            ),
+        Promise\all(array(
+            $client1->connect(1),
+            $client2->connect(1),
+        ))->then(
             function () use ($client1, $client2, $loop, &$counter) {
                 $callback = function ($frame, $resolver) use ($loop, &$counter) {
                     if (0 === $counter) {
