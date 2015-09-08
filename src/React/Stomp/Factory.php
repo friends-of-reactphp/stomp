@@ -42,8 +42,8 @@ class Factory
         $conn->on('error', function ($e) use ($input) {
             $input->emit('error', array($e));
         });
-        $conn->on('end', function () use ($input) {
-            $input->emit('end');
+        $conn->on('close', function () use ($input) {
+            $input->emit('close');
         });
 
         return new Client($this->loop, $input, $output, $options);
