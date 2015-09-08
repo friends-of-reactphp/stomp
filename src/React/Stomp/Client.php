@@ -49,6 +49,7 @@ class Client extends EventEmitter
         $this->input = $input;
         $this->input->on('frame', array($this, 'handleFrameEvent'));
         $this->input->on('error', array($this, 'handleErrorEvent'));
+        $this->input->on('end', array($this, 'handleEndEvent'));
         $this->output = $output;
 
         $this->options = $this->sanatizeOptions($options);
@@ -81,6 +82,7 @@ class Client extends EventEmitter
             $this->options['login'],
             $this->options['passcode']
         );
+
         $this->output->sendFrame($frame);
 
         return $this->connectPromise = $deferred->promise()->then(function () use ($client) {
@@ -178,6 +180,15 @@ class Client extends EventEmitter
     public function handleErrorEvent(\Exception $e)
     {
         $this->emit('error', array($e));
+    }
+
+    public function handleEndEvent()
+    {
+        $this->connectDeferred = null;
+        $this->connectPromise = null;
+        $this->connectionStatus = 'not-connected';
+
+        $this->emit('end');
     }
 
     public function processFrame(Frame $frame)
