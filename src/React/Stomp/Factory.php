@@ -43,6 +43,10 @@ class Factory
             $input->emit('error', array($e));
         });
 
+        $conn->on('end', function () {
+            throw new ConnectionException('Connection has been lost');
+        });
+
         return new Client($this->loop, $input, $output, $options);
     }
 
