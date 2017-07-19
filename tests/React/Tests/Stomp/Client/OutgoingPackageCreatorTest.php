@@ -2,12 +2,13 @@
 
 namespace React\Tests\Stomp\Client;
 
+use PHPUnit\Framework\TestCase;
 use React\Stomp\Client\OutgoingPackageCreator;
 use React\Stomp\Client\State;
 use React\Stomp\Protocol\Frame;
 use React\Tests\Stomp\Constraint\FrameEquals;
 
-class OutgoingPackageCreatorTest extends \PHPUnit_Framework_TestCase
+class OutgoingPackageCreatorTest extends TestCase
 {
     /** @test */
     public function connectShouldEmitConnectFrame()
@@ -180,6 +181,6 @@ class OutgoingPackageCreatorTest extends \PHPUnit_Framework_TestCase
 
     private function createCallableMock()
     {
-        return $this->getMock('React\Tests\Stomp\Stub\CallableStub');
+        return $this->createMock('React\Tests\Stomp\Stub\CallableStub');
     }
 }

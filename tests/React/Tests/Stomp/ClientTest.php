@@ -14,7 +14,7 @@ class ClientTest extends TestCase
     {
         $input = $this->createInputStreamMock();
 
-        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output = $this->createMock('React\Stomp\Io\OutputStreamInterface');
         $output
             ->expects($this->once())
             ->method('sendFrame')
@@ -28,7 +28,7 @@ class ClientTest extends TestCase
     public function connectShouldReturnPromise()
     {
         $input = $this->createInputStreamMock();
-        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output = $this->createMock('React\Stomp\Io\OutputStreamInterface');
 
         $client = new Client($this->createLoopMock(), $input, $output, array('vhost' => 'localhost'));
         $promise = $client->connect();
@@ -44,7 +44,7 @@ class ClientTest extends TestCase
     public function connectShouldRejectMissingHostOrVhost()
     {
         $input = $this->createInputStreamMock();
-        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output = $this->createMock('React\Stomp\Io\OutputStreamInterface');
         $client = new Client($this->createLoopMock(), $input, $output, array());
     }
 
@@ -52,7 +52,7 @@ class ClientTest extends TestCase
     public function connectTwiceShouldReturnTheSamePromise()
     {
         $input = $this->createInputStreamMock();
-        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output = $this->createMock('React\Stomp\Io\OutputStreamInterface');
 
         $client = new Client($this->createLoopMock(), $input, $output, array('vhost' => 'localhost'));
         $promise1 = $client->connect();
@@ -70,7 +70,7 @@ class ClientTest extends TestCase
 
         $connectFrame = new Frame('CONNECT', array('accept-version' => '1.1', 'host' => 'localhost'));
 
-        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output = $this->createMock('React\Stomp\Io\OutputStreamInterface');
         $output
             ->expects($this->at(0))
             ->method('sendFrame')
@@ -94,7 +94,7 @@ class ClientTest extends TestCase
     public function itShouldEmitConnectAfterHandshake()
     {
         $input = $this->createInputStreamMock();
-        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output = $this->createMock('React\Stomp\Io\OutputStreamInterface');
 
         $client = new Client($this->createLoopMockWithConnectionTimer(), $input, $output, array('vhost' => 'localhost'));
         $client->on('connect', $this->expectCallableOnce());
@@ -108,7 +108,7 @@ class ClientTest extends TestCase
     public function itShouldRejectPromiseIfConnectionFails()
     {
         $input = $this->createInputStreamMock();
-        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output = $this->createMock('React\Stomp\Io\OutputStreamInterface');
 
         $client = new Client($this->createLoopMock(), $input, $output, array('vhost' => 'localhost'));
         $client->connect()
@@ -122,7 +122,7 @@ class ClientTest extends TestCase
     public function itShouldRejectPromiseIfConnectionTimeout()
     {
         $input = $this->createInputStreamMock();
-        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output = $this->createMock('React\Stomp\Io\OutputStreamInterface');
 
         $loop = $this->createLoopMock();
         $timeout = 30;
@@ -149,7 +149,7 @@ class ClientTest extends TestCase
     public function timeoutThenConnectShouldReturnANewPromise()
     {
         $input = $this->createInputStreamMock();
-        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output = $this->createMock('React\Stomp\Io\OutputStreamInterface');
 
         $loop = $this->createLoopMock();
         $timeout = 30;
@@ -179,7 +179,7 @@ class ClientTest extends TestCase
     public function itShouldCancelTimerOnConnection()
     {
         $input = $this->createInputStreamMock();
-        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output = $this->createMock('React\Stomp\Io\OutputStreamInterface');
 
         $timeout = 30;
         $signature = uniqid('signature');
@@ -198,7 +198,7 @@ class ClientTest extends TestCase
     public function itShouldNotBeConnectedAfterConstructor()
     {
         $input = $this->createInputStreamMock();
-        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output = $this->createMock('React\Stomp\Io\OutputStreamInterface');
 
         $client = new Client($this->createLoopMock(), $input, $output, array('vhost' => 'localhost'));
 
@@ -209,7 +209,7 @@ class ClientTest extends TestCase
     public function itShouldThrowAnExceptionOnConnectedFrameOutsideWindow()
     {
         $input = $this->createInputStreamMock();
-        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output = $this->createMock('React\Stomp\Io\OutputStreamInterface');
         $loop = $this->createLoopMock();
 
         $errors = array();
@@ -229,7 +229,7 @@ class ClientTest extends TestCase
     public function itShouldBeConnectedWhenThePromiseIsResolved()
     {
         $input = $this->createInputStreamMock();
-        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output = $this->createMock('React\Stomp\Io\OutputStreamInterface');
 
         $client = new Client($this->createLoopMockWithConnectionTimer(), $input, $output, array('vhost' => 'localhost'));
         $client->connect();
@@ -244,7 +244,7 @@ class ClientTest extends TestCase
     public function itShouldNotBeConnectedAfterDisconnection()
     {
         $input = $this->createInputStreamMock();
-        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output = $this->createMock('React\Stomp\Io\OutputStreamInterface');
 
         $client = new Client($this->createLoopMockWithConnectionTimer(), $input, $output, array('vhost' => 'localhost'));
         $client->connect();
@@ -260,7 +260,7 @@ class ClientTest extends TestCase
     public function itShouldResolveConnectPromiseAfterHandshake()
     {
         $input = $this->createInputStreamMock();
-        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output = $this->createMock('React\Stomp\Io\OutputStreamInterface');
 
         $client = new Client($this->createLoopMockWithConnectionTimer(), $input, $output, array('vhost' => 'localhost'));
         $client->on('connect', $this->expectCallableOnce());
@@ -276,7 +276,7 @@ class ClientTest extends TestCase
     public function itShouldChangeToConnectedStateWhenReceivingConnectedResponse()
     {
         $input = $this->createInputStreamMock();
-        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output = $this->createMock('React\Stomp\Io\OutputStreamInterface');
 
         $client = $this->getConnectedClient($input, $output);
     }
@@ -286,7 +286,7 @@ class ClientTest extends TestCase
     {
         $input = $this->createInputStreamMock();
 
-        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output = $this->createMock('React\Stomp\Io\OutputStreamInterface');
         $output
             ->expects($this->at(1))
             ->method('sendFrame')
@@ -307,7 +307,7 @@ class ClientTest extends TestCase
         $callback = $this->createCallableMock();
 
         $input = $this->createInputStreamMock();
-        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output = $this->createMock('React\Stomp\Io\OutputStreamInterface');
 
         $output
             ->expects($this->at(1))
@@ -334,7 +334,7 @@ class ClientTest extends TestCase
         $callback = $this->createCallableMock();
 
         $input = $this->createInputStreamMock();
-        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output = $this->createMock('React\Stomp\Io\OutputStreamInterface');
 
         $output
             ->expects($this->at(1))
@@ -357,7 +357,7 @@ class ClientTest extends TestCase
         $callback = $this->createCallableMock();
 
         $input = $this->createInputStreamMock();
-        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output = $this->createMock('React\Stomp\Io\OutputStreamInterface');
 
         $output
             ->expects($this->at(1))
@@ -379,7 +379,7 @@ class ClientTest extends TestCase
         $callback = $this->createCallableMock();
 
         $input = $this->createInputStreamMock();
-        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output = $this->createMock('React\Stomp\Io\OutputStreamInterface');
 
         $client = $this->getConnectedClient($input, $output);
         $client->subscribeWithAck('/foo', 'auto', $callback);
@@ -402,7 +402,7 @@ class ClientTest extends TestCase
             }));
 
         $input = $this->createInputStreamMock();
-        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output = $this->createMock('React\Stomp\Io\OutputStreamInterface');
 
         $client = $this->getConnectedClient($input, $output);
         $subscriptionId = $client->subscribeWithAck('/foo', $ack, $callback);
@@ -439,7 +439,7 @@ class ClientTest extends TestCase
             }));
 
         $input = $this->createInputStreamMock();
-        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output = $this->createMock('React\Stomp\Io\OutputStreamInterface');
 
         $output
             ->expects($this->at(2))
@@ -475,7 +475,7 @@ class ClientTest extends TestCase
             }));
 
         $input = $this->createInputStreamMock();
-        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output = $this->createMock('React\Stomp\Io\OutputStreamInterface');
 
         $output
             ->expects($this->at(2))
@@ -511,7 +511,7 @@ class ClientTest extends TestCase
             }));
 
         $input = $this->createInputStreamMock();
-        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output = $this->createMock('React\Stomp\Io\OutputStreamInterface');
 
         $client = $this->getConnectedClient($input, $output);
         $subscriptionId = $client->subscribe('/foo', $callback);
@@ -559,7 +559,7 @@ class ClientTest extends TestCase
     {
         $input = $this->createInputStreamMock();
 
-        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output = $this->createMock('React\Stomp\Io\OutputStreamInterface');
         $output
             ->expects($this->at(1))
             ->method('sendFrame')
@@ -576,7 +576,7 @@ class ClientTest extends TestCase
     {
         $input = $this->createInputStreamMock();
 
-        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output = $this->createMock('React\Stomp\Io\OutputStreamInterface');
         $output
             ->expects($this->at(1))
             ->method('sendFrame')
@@ -593,7 +593,7 @@ class ClientTest extends TestCase
     {
         $input = $this->createInputStreamMock();
 
-        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output = $this->createMock('React\Stomp\Io\OutputStreamInterface');
         $output
             ->expects($this->at(1))
             ->method('sendFrame')
@@ -610,7 +610,7 @@ class ClientTest extends TestCase
     {
         $input = $this->createInputStreamMock();
 
-        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output = $this->createMock('React\Stomp\Io\OutputStreamInterface');
         $output
             ->expects($this->at(1))
             ->method('sendFrame')
@@ -626,7 +626,7 @@ class ClientTest extends TestCase
     public function disconnectShouldGracefullyDisconnect()
     {
         $input = $this->createInputStreamMock();
-        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output = $this->createMock('React\Stomp\Io\OutputStreamInterface');
 
         $client = $this->getMockBuilder('React\Stomp\Client')
             ->setConstructorArgs(array($this->createLoopMock(), $input, $output, array('vhost' => 'localhost')))
@@ -650,7 +650,7 @@ class ClientTest extends TestCase
     public function processingErrorShouldResultInClientError()
     {
         $input = $this->createInputStreamMock();
-        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output = $this->createMock('React\Stomp\Io\OutputStreamInterface');
 
         $client = $this->getConnectedClient($input, $output);
         $client->on('error', $this->expectCallableOnce());
@@ -662,7 +662,7 @@ class ClientTest extends TestCase
     public function inputErrorShouldResultInClientError()
     {
         $input = $this->createInputStreamMock();
-        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output = $this->createMock('React\Stomp\Io\OutputStreamInterface');
 
         $client = $this->getConnectedClient($input, $output);
         $client->on('error', $this->expectCallableOnce());
@@ -683,21 +683,21 @@ class ClientTest extends TestCase
     private function createInputStreamMock()
     {
         return $this->getMockBuilder('React\Stomp\Io\InputStream')
-            ->setConstructorArgs(array($this->getMock('React\Stomp\Protocol\Parser')))
+            ->setConstructorArgs(array($this->createMock('React\Stomp\Protocol\Parser')))
             ->setMethods(array('isWritable', 'write', 'end', 'close'))
             ->getMock();
     }
 
     private function createLoopMock()
     {
-        return $this->getMock('React\EventLoop\LoopInterface');
+        return $this->createMock('React\EventLoop\LoopInterface');
     }
 
     private function createLoopMockWithConnectionTimer()
     {
         $loop = $this->createLoopMock();
 
-        $timer = $this->getMock('React\EventLoop\Timer\TimerInterface');
+        $timer = $this->createMock('React\EventLoop\Timer\TimerInterface');
         $timer->expects($this->once())
             ->method('cancel');
 

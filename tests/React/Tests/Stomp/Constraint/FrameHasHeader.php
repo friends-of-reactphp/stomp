@@ -3,8 +3,9 @@
 namespace React\Tests\Stomp\Constraint;
 
 use React\Stomp\Protocol\Frame;
+use PHPUnit_Framework_Constraint as Constraint;
 
-class FrameHasHeader extends \PHPUnit_Framework_Constraint
+class FrameHasHeader extends Constraint
 {
     protected $name;
     protected $value;

@@ -11,7 +11,7 @@ class OutputStreamTest extends TestCase
 {
     public function setUp()
     {
-        $this->loop = $this->getMock('React\EventLoop\LoopInterface');
+        $this->loop = $this->createMock('React\EventLoop\LoopInterface');
         $this->loop
             ->expects($this->any())
             ->method('addTimer')

@@ -2,12 +2,12 @@
 
 namespace React\Tests\Stomp\Client;
 
+use PHPUnit\Framework\TestCase;
 use React\Stomp\Client\IncomingPackageProcessor;
 use React\Stomp\Client\State;
 use React\Stomp\Protocol\Frame;
-use React\Tests\Stomp\Constraint\FrameEquals;
 
-class IncomingPackageProcessorTest extends \PHPUnit_Framework_TestCase
+class IncomingPackageProcessorTest extends TestCase
 {
     /**
      * @test
