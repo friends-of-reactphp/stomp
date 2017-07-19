@@ -31,6 +31,10 @@ class ConnectionTest extends FunctionalTestCase
     /** @test */
     public function itShouldFailOnConnect()
     {
+        if (getenv('SKIP_AUTH_CHECKS') === '1') {
+            return;
+        }
+
         $loop = $this->getEventLoop();
         $client = $this->getClient($loop, array(
             'login' => 'badidealogin',

@@ -1,5 +1,6 @@
 language: php
 
+dist: trusty
 php:
   - 5.6
   - 7.0
@@ -8,13 +9,13 @@ php:
 env:
   - STOMP_PROVIDER=rabbitmq
   - STOMP_PROVIDER=apollo
-  - STOMP_PROVIDER=activemq
+  - STOMP_PROVIDER=activemq SKIP_AUTH_CHECKS=1
 
 before_script:
   - if [ "$STOMP_PROVIDER" = 'apollo' ]; then
-      wget http://mirror.catn.com/pub/apache/activemq/activemq-apollo/1.7/apache-apollo-1.7-unix-distro.tar.gz;
-      tar xzf apache-apollo-1.7-unix-distro.tar.gz;
-      ./apache-apollo-1.7/bin/apollo create apollo;
+      wget http://www-us.apache.org/dist/activemq/activemq-apollo/1.7.1/apache-apollo-1.7.1-unix-distro.tar.gz;
+      tar xzf apache-apollo-1.7.1-unix-distro.tar.gz;
+      ./apache-apollo-1.7.1/bin/apollo create apollo;
       ./apollo/bin/apollo-broker-service start;
       sleep 6;
     fi
@@ -22,8 +23,8 @@ before_script:
       sudo rabbitmq-plugins enable rabbitmq_stomp;
       sudo service rabbitmq-server start;
     fi
-  - if [ "$STOMP_PROVIDER" = 'rabbitmq' ]; then
-      sudo apt install activemq;
+  - if [ "$STOMP_PROVIDER" = 'activemq' ]; then
+      sudo apt install activemq tree;
       sudo cp tests/utils/activemq.xml /etc/activemq/instances-available/main/;
       sudo ln -s /etc/activemq/instances-available/main /etc/activemq/instances-enabled/main;
       sudo service activemq start;
@@ -31,5 +32,5 @@ before_script:
   - composer install --prefer-source
 
 script:
-  - phpunit --coverage-text
-  - phpunit -c phpunit-functional.xml.dist
+  - vendor/bin/phpunit --coverage-text
+  - vendor/bin/phpunit -c phpunit-functional.xml.dist
