@@ -49,6 +49,7 @@ class Client extends EventEmitter
         $this->input = $input;
         $this->input->on('frame', array($this, 'handleFrameEvent'));
         $this->input->on('error', array($this, 'handleErrorEvent'));
+        $this->input->on('close', array($this, 'handleCloseEvent'));
         $this->output = $output;
 
         $this->options = $this->sanatizeOptions($options);
@@ -178,6 +179,15 @@ class Client extends EventEmitter
     public function handleErrorEvent(\Exception $e)
     {
         $this->emit('error', array($e));
+    }
+
+    public function handleCloseEvent()
+    {
+        $this->connectDeferred = null;
+        $this->connectPromise = null;
+        $this->connectionStatus = 'not-connected';
+
+        $this->emit('close');
     }
 
     public function processFrame(Frame $frame)

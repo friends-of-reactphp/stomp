@@ -671,6 +671,18 @@ class ClientTest extends TestCase
         $input->emit('error', array($e));
     }
 
+    /** @test */
+    public function inputCloseShouldResultInClientClose()
+    {
+        $input = $this->createInputStreamMock();
+        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+
+        $client = $this->getConnectedClient($input, $output);
+        $client->on('close', $this->expectCallableOnce());
+
+        $input->emit('close');
+    }
+
     private function getConnectedClient(InputStreamInterface $input, OutputStreamInterface $output)
     {
         $client = new Client($this->createLoopMockWithConnectionTimer(), $input, $output, array('vhost' => 'localhost'));
