@@ -2,11 +2,12 @@
 
 namespace React\Tests\Stomp;
 
+use PHPUnit\Framework\TestCase as PHPUnitCase;
 use React\Stomp\Protocol\Frame;
 use React\Tests\Stomp\Constraint\FrameIsEqual;
 use React\Tests\Stomp\Constraint\FrameHasHeader;
 
-class TestCase extends \PHPUnit_Framework_TestCase
+class TestCase extends PHPUnitCase
 {
     protected function assertFrameEquals(Frame $expected, Frame $frame)
     {
@@ -45,6 +46,6 @@ class TestCase extends \PHPUnit_Framework_TestCase
 
     protected function createCallableMock()
     {
-        return $this->getMock('React\Tests\Stomp\Stub\CallableStub');
+        return $this->createMock('React\Tests\Stomp\Stub\CallableStub');
     }
 }

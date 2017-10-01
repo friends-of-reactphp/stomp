@@ -18,7 +18,8 @@ class ConnectionTest extends FunctionalTestCase
             ->then(function () use ($loop, &$connected) {
                 $connected = true;
                 $loop->stop();
-            }, function (\Exception $e) use ($phpunit) {
+            }, function (\Exception $e) use ($phpunit, $loop) {
+                $loop->stop();
                 $phpunit->fail('Connection should occur');
             });
 
@@ -30,10 +31,14 @@ class ConnectionTest extends FunctionalTestCase
     /** @test */
     public function itShouldFailOnConnect()
     {
+        if (getenv('SKIP_AUTH_CHECKS') === '1') {
+            return;
+        }
+
         $loop = $this->getEventLoop();
         $client = $this->getClient($loop, array(
             'login' => 'badidealogin',
-            'passcode' => 'thereisnoprobabilitythatyouusethispassword'
+            'passcode' => 'blegh'
         ));
 
         $phpunit = $this;
@@ -41,7 +46,8 @@ class ConnectionTest extends FunctionalTestCase
 
         $client
             ->connect()
-            ->then(function () use ($phpunit) {
+            ->then(function () use ($phpunit, $loop) {
+                $loop->stop();
                 $phpunit->fail('Connection should occur');
             }, function ($e) use ($loop, &$error) {
                 $error = $e;

@@ -2,10 +2,11 @@
 
 namespace React\Tests\Stomp\Protocol;
 
+use PHPUnit\Framework\TestCase;
 use React\Stomp\Protocol\Parser;
 use React\Stomp\Protocol\InvalidFrameException;
 
-class ParserTest extends \PHPUnit_Framework_TestCase
+class ParserTest extends TestCase
 {
     /** @test */
     public function itShouldParseASingleFrame()

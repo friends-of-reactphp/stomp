@@ -2,9 +2,10 @@
 
 namespace React\Tests\Stomp\Protocol;
 
+use PHPUnit\Framework\TestCase;
 use React\Stomp\Protocol\Frame;
 
-class FrameDumpTest extends \PHPUnit_Framework_TestCase
+class FrameDumpTest extends TestCase
 {
     /**
      * @test
