@@ -675,7 +675,7 @@ class ClientTest extends TestCase
     public function inputCloseShouldResultInClientClose()
     {
         $input = $this->createInputStreamMock();
-        $output = $this->getMock('React\Stomp\Io\OutputStreamInterface');
+        $output = $this->createMock('React\Stomp\Io\OutputStreamInterface');
 
         $client = $this->getConnectedClient($input, $output);
         $client->on('close', $this->expectCallableOnce());
