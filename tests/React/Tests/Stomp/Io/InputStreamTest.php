@@ -99,7 +99,13 @@ class InputStreamTest extends TestCase
     /** @test */
     public function writingAfterCloseShouldDoNothing()
     {
+        $callback = $this->createCallableMock();
+        $callback
+            ->expects($this->never())
+            ->method('__invoke');
+        
         $input = new InputStream(new Parser());
+        $input->on('frame', $callback);
         $input->close();
 
         $input->write('whoops');

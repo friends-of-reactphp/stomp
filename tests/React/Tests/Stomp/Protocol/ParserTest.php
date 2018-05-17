@@ -3,8 +3,10 @@
 namespace React\Tests\Stomp\Protocol;
 
 use PHPUnit\Framework\TestCase;
-use React\Stomp\Protocol\Parser;
+use React\Stomp\Protocol\Frame;
 use React\Stomp\Protocol\InvalidFrameException;
+use React\Stomp\Protocol\Parser;
+
 
 class ParserTest extends TestCase
 {
@@ -162,7 +164,17 @@ foo:bar\\r
         $data = "$command\nfoo:bar\n\n\x00";
 
         $parser = new Parser();
-        $parser->parse($data);
+        $result = $parser->parse($data);
+        
+        list($frames, $data) = $parser->parse($data);
+
+        $this->assertHasSingleFrame(
+            $command,
+            array('foo' => 'bar'),
+            '',
+            $data,
+            $frames
+        );
     }
 
     public function provideFrameCommandsThatMustNotHaveABody()

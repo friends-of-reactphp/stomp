@@ -18,18 +18,16 @@ class FactoryTest extends TestCase
         $this->assertInstanceOf('React\Socket\Connection', $conn);
     }
 
-    /** @test */
+    /**
+     * @test 
+     * @expectedException \React\Stomp\Exception\ConnectionException
+     */
     public function itShouldThrowAnExceptionInCaseSocketCreationFails()
     {
         $loop = $this->createMock('React\EventLoop\LoopInterface');
         $factory = new Factory($loop);
-
-        try {
-            $factory->createConnection(array('host' => 'localhost', 'port' => 37235));
-            $this->fail('This should have raised an exception');
-        } catch (ConnectionException $e) {
-
-        }
+        
+        $factory->createConnection(array('host' => 'localhost', 'port' => 37235));
     }
 
     public function testCreateClient()

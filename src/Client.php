@@ -73,7 +73,7 @@ class Client extends EventEmitter
         });
 
         $this->on('connect', function ($client) use ($timer, $deferred) {
-            $timer->cancel();
+            $this->loop->cancelTimer($timer);
             $deferred->resolve($client);
         });
 

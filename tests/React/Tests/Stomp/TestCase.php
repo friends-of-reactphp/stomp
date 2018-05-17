@@ -13,6 +13,11 @@ class TestCase extends PHPUnitCase
     {
         $this->assertSame((string) $expected, (string) $frame);
     }
+    
+    protected function assertFrameNotEquals(Frame $expected, Frame $frame)
+    {
+        $this->assertNotSame((string) $expected, (string) $frame);
+    }
 
     protected function frameIsEqual(Frame $frame)
     {

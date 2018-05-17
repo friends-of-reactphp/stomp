@@ -9,6 +9,8 @@ use React\Stomp\Protocol\Frame;
 
 class ClientTest extends TestCase
 {
+    protected $capturedFrame;
+    
     /** @test */
     public function connectShouldSendConnectFrame()
     {
@@ -500,14 +502,14 @@ class ClientTest extends TestCase
     /** @test */
     public function messagesShouldGetRoutedToSubscriptions()
     {
-        $capturedFrame = null;
+        $this->capturedFrame = null;
 
         $callback = $this->createCallableMock();
         $callback
             ->expects($this->exactly(2))
             ->method('__invoke')
-            ->will($this->returnCallback(function ($frame) use (&$capturedFrame) {
-                $capturedFrame = $frame;
+            ->will($this->returnCallback(function ($frame) {
+                $this->capturedFrame = $frame;
             }));
 
         $input = $this->createInputStreamMock();
@@ -522,6 +524,9 @@ class ClientTest extends TestCase
             'this is a published message'
         );
         $input->emit('frame', array($responseFrame));
+        
+        $this->assertInstanceOf('React\Stomp\Protocol\Frame', $this->capturedFrame);
+        $this->assertFrameEquals($responseFrame, $this->capturedFrame);
 
         $responseFrame = new Frame(
             'MESSAGE',
@@ -530,10 +535,10 @@ class ClientTest extends TestCase
         );
         $input->emit('frame', array($responseFrame));
 
-        $this->assertInstanceOf('React\Stomp\Protocol\Frame', $capturedFrame);
-        $this->assertFrameEquals($responseFrame, $capturedFrame);
+        $this->assertInstanceOf('React\Stomp\Protocol\Frame', $this->capturedFrame);
+        $this->assertFrameEquals($responseFrame, $this->capturedFrame);
 
-        return array($input, $output, $client, $capturedFrame);
+        return array($input, $output, $client, $this->capturedFrame);
     }
 
     /**
@@ -542,9 +547,9 @@ class ClientTest extends TestCase
     */
     public function callbackShouldNotBeCalledAfterUnsubscribe($data)
     {
-        list($input, $output, $client, $capturedFrame) = $data;
+        list($input, $output, $client, $this->capturedFrame) = $data;
 
-        $client->unsubscribe($capturedFrame->getHeader('subscription'));
+        $client->unsubscribe($this->capturedFrame->getHeader('subscription'));
 
         $responseFrame = new Frame(
             'MESSAGE',
@@ -552,6 +557,7 @@ class ClientTest extends TestCase
             'this is a published message'
         );
         $input->emit('frame', array($responseFrame));
+        $this->assertFrameNotEquals($responseFrame, $this->capturedFrame);
     }
 
     /** @test */
@@ -709,13 +715,15 @@ class ClientTest extends TestCase
     {
         $loop = $this->createLoopMock();
 
-        $timer = $this->createMock('React\EventLoop\Timer\TimerInterface');
-        $timer->expects($this->once())
-            ->method('cancel');
+        $timer = $this->createMock('React\EventLoop\TimerInterface');
 
         $loop->expects($this->once())
             ->method('addTimer')
             ->will($this->returnValue($timer));
+        
+        $loop->expects($this->once())
+            ->method('cancelTimer')
+            ->with($timer);
 
         return $loop;
     }
