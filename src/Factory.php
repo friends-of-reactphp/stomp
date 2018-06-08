@@ -17,6 +17,7 @@ class Factory
         'vhost'     => '/',
         'login'     => 'guest',
         'passcode'  => 'guest',
+        'protocol'  => 'tcp',
     );
 
     private $loop;
@@ -51,7 +52,7 @@ class Factory
 
     public function createConnection($options)
     {
-        $address = 'tcp://'.$options['host'].':'.$options['port'];
+        $address = $options['protocol'].'://'.$options['host'].':'.$options['port'];
 
         if (false === $fd = @stream_socket_client($address, $errno, $errstr)) {
             $message = "Could not bind to $address: $errstr";
