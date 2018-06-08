@@ -25,6 +25,7 @@ before_script:
       sudo service rabbitmq-server start;
     fi
   - if [ "$STOMP_PROVIDER" = 'activemq' ]; then
+      sudo apt update;
       sudo apt install activemq;
       sudo cp tests/utils/activemq.xml /etc/activemq/instances-available/main/;
       sudo ln -s /etc/activemq/instances-available/main /etc/activemq/instances-enabled/main;
