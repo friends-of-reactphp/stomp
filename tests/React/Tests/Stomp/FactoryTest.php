@@ -38,7 +38,7 @@ class FactoryTest extends TestCase
 
         $loop = $this->createMock('React\EventLoop\LoopInterface');
         $factory = new Factory($loop);
-        $client = $factory->createClient(array('host' => 'localhost', 'port' => 37235));
+        $client = $factory->createClient(array('host' => 'localhost', 'port' => 37235), true);
 
         $this->assertInstanceOf('React\Stomp\Client', $client);
     }
