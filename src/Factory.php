@@ -2,12 +2,13 @@
 
 namespace React\Stomp;
 
-use React\EventLoop\LoopInterface;
-use React\Stomp\Exception\ConnectionException;
-use React\Stomp\Io\InputStream;
-use React\Stomp\Io\OutputStream;
-use React\Stomp\Protocol\Parser;
 use React\Socket\Connection;
+use React\Stomp\FrameBuffer;
+use React\Stream\ThroughStream;
+use React\EventLoop\LoopInterface;
+use React\Stream\ReadableResourceStream;
+use React\Stream\WritableResourceStream;
+use React\Stomp\Exception\ConnectionException;
 
 class Factory
 {
@@ -26,23 +27,34 @@ class Factory
         $this->loop = $loop;
     }
 
-    public function createClient(array $options = array())
+    public function createClient(array $options = array(), $silent = false)
     {
         $options = array_merge($this->defaultOptions, $options);
 
-        $conn = $this->createConnection($options);
+        $connection = $this->createConnection($options);
 
-        $parser = new Parser();
-        $input = new InputStream($parser);
-        $conn->pipe($input);
+        $frameBuffer = new FrameBuffer;
+        $input = new WritableResourceStream(fopen('php://stdout', 'w'), $this->loop);
+        $output = new ReadableResourceStream(fopen('php://stdin', 'r'), $this->loop);
 
-        $output = new OutputStream($this->loop);
-        $output->pipe($conn);
+        $output->pipe($connection);
+        if (! $silent) {
+            $connection->pipe($input);
+        }
 
-        $conn->on('error', function ($e) use ($input) {
-            $input->emit('error', array($e));
+        $connection->pipe(new ThroughStream(function ($data) use ($input, $frameBuffer) {
+            $frames = $frameBuffer->addToBuffer($data)->pullFrames();
+
+            foreach ($frames as $frame) {
+                $input->emit('frame', array($frame));
+            }
+        }));
+
+        $connection->on('error', function ($error) use ($input) {
+            $input->emit('error', array($error));
         });
-        $conn->on('close', function () use ($input) {
+
+        $connection->on('close', function () use ($input) {
             $input->emit('close');
         });
 
@@ -58,8 +70,8 @@ class Factory
             throw new ConnectionException($message, $errno);
         }
 
-        $conn = new Connection($fd, $this->loop);
+        $connection = new Connection($fd, $this->loop);
 
-        return $conn;
+        return $connection;
     }
 }

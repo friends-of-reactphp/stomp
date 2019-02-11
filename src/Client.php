@@ -4,20 +4,19 @@ namespace React\Stomp;
 
 use Evenement\EventEmitter;
 use React\Promise\Deferred;
-use React\Promise\PromiseInterface;
-use React\Stomp\Client\IncomingPackageProcessor;
-use React\Stomp\Client\OutgoingPackageCreator;
 use React\Stomp\Client\State;
-use React\Stomp\Client\Command\CommandInterface;
-use React\Stomp\Client\Command\CloseCommand;
-use React\Stomp\Client\Command\ConnectionEstablishedCommand;
-use React\Stomp\Client\Command\NullCommand;
-use React\Stomp\Exception\ProcessingException;
-use React\Stomp\Exception\ConnectionException;
-use React\Stomp\Io\InputStreamInterface;
-use React\Stomp\Io\OutputStreamInterface;
 use React\Stomp\Protocol\Frame;
 use React\EventLoop\LoopInterface;
+use React\Stream\ReadableStreamInterface;
+use React\Stream\WritableStreamInterface;
+use React\Stomp\Client\Command\NullCommand;
+use React\Stomp\Client\Command\CloseCommand;
+use React\Stomp\Client\OutgoingPackageCreator;
+use React\Stomp\Exception\ConnectionException;
+use React\Stomp\Exception\ProcessingException;
+use React\Stomp\Client\Command\CommandInterface;
+use React\Stomp\Client\IncomingPackageProcessor;
+use React\Stomp\Client\Command\ConnectionEstablishedCommand;
 
 /**
  * @event connect
@@ -39,7 +38,7 @@ class Client extends EventEmitter
     /** @var PromiseInterface */
     private $connectPromise;
 
-    public function __construct(LoopInterface $loop, InputStreamInterface $input, OutputStreamInterface $output, array $options)
+    public function __construct(LoopInterface $loop, WritableStreamInterface $input, ReadableStreamInterface $output, array $options)
     {
         $this->loop = $loop;
         $state = new State();
@@ -61,7 +60,7 @@ class Client extends EventEmitter
             return $this->connectPromise;
         }
 
-        $this->connectionStatus = 'connecting';
+        $this->setConnectionStatus('connecting');
 
         $deferred = $this->connectDeferred = new Deferred();
         $client = $this;
@@ -73,7 +72,7 @@ class Client extends EventEmitter
         });
 
         $this->on('connect', function ($client) use ($timer, $deferred) {
-            $timer->cancel();
+            $this->loop->cancelTimer($timer);
             $deferred->resolve($client);
         });
 
@@ -82,7 +81,7 @@ class Client extends EventEmitter
             $this->options['login'],
             $this->options['passcode']
         );
-        $this->output->sendFrame($frame);
+        $this->sendFrameToOutput($frame);
 
         return $this->connectPromise = $deferred->promise()->then(function () use ($client) {
             $client->setConnectionStatus('connected');
@@ -90,10 +89,15 @@ class Client extends EventEmitter
         });
     }
 
+    private function sendFrameToOutput(Frame $frame)
+    {
+        $this->output->emit('data', array($frame));
+    }
+
     public function send($destination, $body, array $headers = array())
     {
         $frame = $this->packageCreator->send($destination, $body, $headers);
-        $this->output->sendFrame($frame);
+        $this->sendFrameToOutput($frame);
     }
 
     public function subscribe($destination, $callback, array $headers = array())
@@ -112,7 +116,7 @@ class Client extends EventEmitter
     private function doSubscription($destination, $callback, $ack, array $headers)
     {
         $frame = $this->packageCreator->subscribe($destination, $ack, $headers);
-        $this->output->sendFrame($frame);
+        $this->sendFrameToOutput($frame);
 
         $subscriptionId = $frame->getHeader('id');
 
@@ -125,7 +129,7 @@ class Client extends EventEmitter
     public function unsubscribe($subscriptionId, array $headers = array())
     {
         $frame = $this->packageCreator->unsubscribe($subscriptionId, $headers);
-        $this->output->sendFrame($frame);
+        $this->sendFrameToOutput($frame);
 
         unset($this->acknowledgements[$subscriptionId]);
         unset($this->subscriptions[$subscriptionId]);
@@ -134,24 +138,24 @@ class Client extends EventEmitter
     public function ack($subscriptionId, $messageId, array $headers = array())
     {
         $frame = $this->packageCreator->ack($subscriptionId, $messageId, $headers);
-        $this->output->sendFrame($frame);
+        $this->sendFrameToOutput($frame);
     }
 
     public function nack($subscriptionId, $messageId, array $headers = array())
     {
         $frame = $this->packageCreator->nack($subscriptionId, $messageId, $headers);
-        $this->output->sendFrame($frame);
+        $this->sendFrameToOutput($frame);
     }
 
     public function disconnect()
     {
         $receipt = $this->generateReceiptId();
         $frame = $this->packageCreator->disconnect($receipt);
-        $this->output->sendFrame($frame);
+        $this->sendFrameToOutput($frame);
 
         $this->connectDeferred = null;
         $this->connectPromise = null;
-        $this->connectionStatus = 'not-connected';
+        $this->setConnectionStatus('not-connected');
     }
 
     public function resetConnectDeferred()
@@ -163,6 +167,7 @@ class Client extends EventEmitter
     public function handleFrameEvent(Frame $frame)
     {
         try {
+            $this->emit('frame', array($frame));
             $this->processFrame($frame);
         } catch (ProcessingException $e) {
             $this->emit('error', array($e));
@@ -171,7 +176,7 @@ class Client extends EventEmitter
                 $this->connectDeferred->reject($e);
                 $this->connectDeferred = null;
                 $this->connectPromise = null;
-                $this->connectionStatus = 'not-connected';
+                $this->setConnectionStatus('not-connected');
             }
         }
     }
@@ -185,7 +190,7 @@ class Client extends EventEmitter
     {
         $this->connectDeferred = null;
         $this->connectPromise = null;
-        $this->connectionStatus = 'not-connected';
+        $this->setConnectionStatus('not-connected');
 
         $this->emit('close');
     }
@@ -261,11 +266,12 @@ class Client extends EventEmitter
     public function setConnectionStatus($status)
     {
         $this->connectionStatus = $status;
+
+        $this->emit('connection-status', array($this->connectionStatus));
     }
 
     public function generateReceiptId()
     {
         return mt_rand();
     }
-
 }
