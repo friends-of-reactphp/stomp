@@ -34,8 +34,8 @@ class Factory
         $connection = $this->createConnection($options);
 
         $frameBuffer = new FrameBuffer;
-        $input = new WritableResourceStream(STDOUT, $this->loop);
-        $output = new ReadableResourceStream(STDIN, $this->loop);
+        $input = new WritableResourceStream(fopen('php://stdout', 'w'), $this->loop);
+        $output = new ReadableResourceStream(fopen('php://stdin', 'r'), $this->loop);
 
         $output->pipe($connection);
         if ($silent === false) {
@@ -46,12 +46,12 @@ class Factory
             $frames = $frameBuffer->addToBuffer($data)->pullFrames();
 
             foreach ($frames as $frame) {
-                $input->emit('frame', [$frame]);
+                $input->emit('frame', array($frame));
             }
         }));
 
         $connection->on('error', function ($error) use ($input) {
-            $input->emit('error', [$error]);
+            $input->emit('error', array($error));
         });
 
         $connection->on('close', function () use ($input) {

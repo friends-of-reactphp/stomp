@@ -91,7 +91,7 @@ class Client extends EventEmitter
 
     private function sendFrameToOutput(Frame $frame)
     {
-        $this->output->emit('data', [$frame]);
+        $this->output->emit('data', array($frame));
     }
 
     public function send($destination, $body, array $headers = array())
@@ -167,7 +167,7 @@ class Client extends EventEmitter
     public function handleFrameEvent(Frame $frame)
     {
         try {
-            $this->emit('frame', [$frame]);
+            $this->emit('frame', array($frame));
             $this->processFrame($frame);
         } catch (ProcessingException $e) {
             $this->emit('error', array($e));
@@ -267,7 +267,7 @@ class Client extends EventEmitter
     {
         $this->connectionStatus = $status;
 
-        $this->emit('connection-status', [$this->connectionStatus]);
+        $this->emit('connection-status', array($this->connectionStatus));
     }
 
     public function generateReceiptId()
