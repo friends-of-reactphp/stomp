@@ -155,7 +155,7 @@ class Client extends EventEmitter
 
         $this->connectDeferred = null;
         $this->connectPromise = null;
-        $this->connectionStatus = 'not-connected';
+        $this->setConnectionStatus('not-connected');
     }
 
     public function resetConnectDeferred()
@@ -176,7 +176,7 @@ class Client extends EventEmitter
                 $this->connectDeferred->reject($e);
                 $this->connectDeferred = null;
                 $this->connectPromise = null;
-                $this->connectionStatus = 'not-connected';
+                $this->setConnectionStatus('not-connected');
             }
         }
     }
@@ -190,7 +190,7 @@ class Client extends EventEmitter
     {
         $this->connectDeferred = null;
         $this->connectPromise = null;
-        $this->connectionStatus = 'not-connected';
+        $this->setConnectionStatus('not-connected');
 
         $this->emit('close');
     }
