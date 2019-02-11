@@ -91,7 +91,7 @@ class Client extends EventEmitter
 
     private function sendFrameToOutput(Frame $frame)
     {
-        $this->output->emit('data', [(string) $frame]);
+        $this->output->emit('data', [$frame]);
     }
 
     public function send($destination, $body, array $headers = array())
