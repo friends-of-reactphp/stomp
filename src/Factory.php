@@ -3,8 +3,8 @@
 namespace React\Stomp;
 
 use React\Socket\Connection;
+use React\Stomp\FrameBuffer;
 use React\Stream\ThroughStream;
-use React\Stomp\Protocol\Parser;
 use React\EventLoop\LoopInterface;
 use React\Stream\ReadableResourceStream;
 use React\Stream\WritableResourceStream;
@@ -33,6 +33,7 @@ class Factory
 
         $connection = $this->createConnection($options);
 
+        $frameBuffer = new FrameBuffer;
         $input = new WritableResourceStream(STDOUT, $this->loop);
         $output = new ReadableResourceStream(STDIN, $this->loop);
 
@@ -41,10 +42,8 @@ class Factory
             $connection->pipe($input);
         }
 
-        $connection->pipe(new ThroughStream(function ($data) use ($input) {
-            $parser = new Parser();
-
-            [$frames, $data] = $parser->parse($data);
+        $connection->pipe(new ThroughStream(function ($data) use ($input, $frameBuffer) {
+            $frames = $frameBuffer->addToBuffer($data)->pullFrames();
 
             foreach ($frames as $frame) {
                 $input->emit('frame', [$frame]);
