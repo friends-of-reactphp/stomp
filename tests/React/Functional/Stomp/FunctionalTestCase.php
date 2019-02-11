@@ -31,6 +31,6 @@ abstract class FunctionalTestCase extends PHPUnitCase
         $default = require $configFile;
         $options = array_merge($default, $options);
 
-        return $factory->createClient($options);
+        return $factory->createClient($options, true);
     }
 }
