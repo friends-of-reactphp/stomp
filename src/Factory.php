@@ -27,7 +27,7 @@ class Factory
         $this->loop = $loop;
     }
 
-    public function createClient(array $options = array(), bool $silent = false)
+    public function createClient(array $options = array(), $silent = false)
     {
         $options = array_merge($this->defaultOptions, $options);
 
@@ -38,7 +38,7 @@ class Factory
         $output = new ReadableResourceStream(fopen('php://stdin', 'r'), $this->loop);
 
         $output->pipe($connection);
-        if ($silent === false) {
+        if (! $silent) {
             $connection->pipe($input);
         }
 
