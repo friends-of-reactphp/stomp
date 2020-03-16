@@ -5,9 +5,9 @@
     "license": "MIT",
     "require": {
         "php": ">=5.4",
-        "evenement/evenement": "~3.0",
+        "evenement/evenement": "^3.0 || ^2.0 || ^1.0",
         "react/socket": "^0.7 || ^1.0 || ^1.1",
-        "react/event-loop": ">0.5",
+        "react/event-loop": "^1.0 || ^0.5",
         "react/promise": "~2.0"
     },
     "autoload": {
