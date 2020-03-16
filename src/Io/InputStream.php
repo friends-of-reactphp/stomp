@@ -3,7 +3,8 @@
 namespace React\Stomp\Io;
 
 use React\Stomp\Protocol\Parser;
-use React\Stream\WritableStream;
+use Evenement\EventEmitter;
+use React\Stream\WritableStreamInterface;
 
 // $parser = new Parser();
 // $input = new InputStream($parser);
@@ -12,8 +13,9 @@ use React\Stream\WritableStream;
 // });
 // $conn->pipe($input);
 
-class InputStream extends WritableStream implements InputStreamInterface
+final class InputStream extends EventEmitter implements WritableStreamInterface, InputStreamInterface
 {
+    protected $closed = false;
     private $buffer = '';
     private $parser;
 
@@ -32,4 +34,30 @@ class InputStream extends WritableStream implements InputStreamInterface
             $this->emit('frame', array($frame));
         }
     }
+
+    public function end($data = null)
+    {
+        if (null !== $data) {
+            $this->write($data);
+        }
+
+        $this->close();
+    }
+
+    public function isWritable()
+    {
+        return !$this->closed;
+    }
+
+    public function close()
+    {
+        if ($this->closed) {
+            return;
+        }
+
+        $this->closed = true;
+        $this->emit('close');
+        $this->removeAllListeners();
+    }
+
 }

@@ -2,8 +2,8 @@
 
 namespace React\Tests\Stomp\Constraint;
 
+use PHPUnit\Framework\Constraint\Constraint;
 use React\Stomp\Protocol\Frame;
-use PHPUnit_Framework_Constraint as Constraint;
 
 class FrameIsEqual extends Constraint
 {
@@ -11,6 +11,7 @@ class FrameIsEqual extends Constraint
 
     public function __construct(Frame $frame)
     {
+        parent::__construct();
         $this->frame = $frame;
     }
 

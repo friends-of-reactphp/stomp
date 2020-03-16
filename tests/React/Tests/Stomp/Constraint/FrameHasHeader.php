@@ -3,7 +3,7 @@
 namespace React\Tests\Stomp\Constraint;
 
 use React\Stomp\Protocol\Frame;
-use PHPUnit_Framework_Constraint as Constraint;
+use PHPUnit\Framework\Constraint\Constraint;
 
 class FrameHasHeader extends Constraint
 {
@@ -12,6 +12,7 @@ class FrameHasHeader extends Constraint
 
     public function __construct($name, $value)
     {
+        parent::__construct();
         $this->name = $name;
         $this->value = $value;
     }
