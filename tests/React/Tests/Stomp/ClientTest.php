@@ -707,12 +707,12 @@ class ClientTest extends TestCase
 
     private function createLoopMockWithConnectionTimer()
     {
-        $timer = $this->createMock('React\EventLoop\Timer\Timer');
+        $timer = $this->createMock('React\EventLoop\TimerInterface');
 
         $loop = $this->createLoopMock();
         $loop->expects($this->once())
             ->method('cancelTimer')
-        ->with($timer);
+            ->with($timer);
 
 
         $loop->expects($this->once())
