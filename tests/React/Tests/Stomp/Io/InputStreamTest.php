@@ -96,7 +96,10 @@ class InputStreamTest extends TestCase
         $this->assertFalse($input->isWritable());
     }
 
-    /** @test */
+    /**
+     * @test
+     * @doesNotPerformAssertions
+     */
     public function writingAfterCloseShouldDoNothing()
     {
         $input = new InputStream(new Parser());

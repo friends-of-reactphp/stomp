@@ -1,2 +1,2 @@
-vendor
-Dockerfile
+/vendor/
+/composer.lock

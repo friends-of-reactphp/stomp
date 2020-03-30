@@ -3,7 +3,6 @@
 namespace React\Tests\Stomp\Constraint;
 
 use React\Stomp\Protocol\Frame;
-use PHPUnit_Framework_Constraint as Constraint;
 
 class FrameIsEqual extends Constraint
 {

@@ -46,6 +46,11 @@ class TestCase extends PHPUnitCase
 
     protected function createCallableMock()
     {
-        return $this->createMock('React\Tests\Stomp\Stub\CallableStub');
+        return $this->getMockBuilder('stdClass')->setMethods(array('__invoke'))->getMock();
+    }
+
+    protected function createMock($class)
+    {
+        return $this->getMockBuilder($class)->getMock();
     }
 }

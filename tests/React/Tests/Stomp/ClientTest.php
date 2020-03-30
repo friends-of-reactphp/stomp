@@ -539,6 +539,7 @@ class ClientTest extends TestCase
     /**
     * @test
     * @depends messagesShouldGetRoutedToSubscriptions
+    * @doesNotPerformAssertions
     */
     public function callbackShouldNotBeCalledAfterUnsubscribe($data)
     {

@@ -18,7 +18,10 @@ class FactoryTest extends TestCase
         $this->assertInstanceOf('React\Socket\Connection', $conn);
     }
 
-    /** @test */
+    /**
+     * @test
+     * @doesNotPerformAssertions
+     */
     public function itShouldThrowAnExceptionInCaseSocketCreationFails()
     {
         $loop = $this->createMock('React\EventLoop\LoopInterface');
