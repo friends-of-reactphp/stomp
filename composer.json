@@ -5,14 +5,16 @@
     "license": "MIT",
     "require": {
         "php": ">=5.4",
-        "evenement/evenement": "~2.0",
-        "react/socket": "0.4.*",
+        "evenement/evenement": "^3.0 || ^2.0 || ^1.0",
+        "react/socket": "^1.0 || ^0.7",
+        "react/event-loop": "^1.0 || ^0.5",
         "react/promise": "~2.0"
     },
     "autoload": {
         "psr-4": { "React\\Stomp\\": "src" }
     },
     "require-dev": {
-        "phpunit/phpunit": "^5.7 || ^6.4"
+        "phpunit/phpunit": "^5.7 || ^6.4",
+        "dg/bypass-finals": "^1.1"
     }
 }

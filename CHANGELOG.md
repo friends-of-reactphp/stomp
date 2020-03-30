@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+* NEXT VERSION
+  * Bump react deps to 1.1.* (@phiamo)
+  * combined the in 0.6.0 existing ReadableStream and WritableStream
+    into the now also final InputStream and OutputStream classes
+  * adapted the cancelTimer API change in Client 
+
 * 0.2.0 (2014-11-29)
 
   * Bump react deps to 0.4.* (@Easen)
