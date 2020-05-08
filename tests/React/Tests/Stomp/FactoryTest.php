@@ -11,7 +11,7 @@ class FactoryTest extends TestCase
     {
         $server = stream_socket_server('tcp://localhost:37234');
 
-        $loop = $this->createMock('React\EventLoop\LoopInterface');
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $factory = new Factory($loop);
         $conn = $factory->createConnection(array('host' => 'localhost', 'port' => 37234));
 
@@ -24,7 +24,7 @@ class FactoryTest extends TestCase
      */
     public function itShouldThrowAnExceptionInCaseSocketCreationFails()
     {
-        $loop = $this->createMock('React\EventLoop\LoopInterface');
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $factory = new Factory($loop);
 
         try {
@@ -39,7 +39,7 @@ class FactoryTest extends TestCase
     {
         $server = stream_socket_server('tcp://localhost:37235');
 
-        $loop = $this->createMock('React\EventLoop\LoopInterface');
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $factory = new Factory($loop);
         $client = $factory->createClient(array('host' => 'localhost', 'port' => 37235));
 
