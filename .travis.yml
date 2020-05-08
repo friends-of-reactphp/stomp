@@ -9,10 +9,10 @@ php:
 
 env:
   - STOMP_PROVIDER=rabbitmq
-  - STOMP_PROVIDER=apollo
+# - STOMP_PROVIDER=apollo # don't install legacy ActiveMQ Apollo anymore
   - STOMP_PROVIDER=activemq SKIP_AUTH_CHECKS=1
 
-before_script:
+install:
   - if [ "$STOMP_PROVIDER" = 'apollo' ]; then
       wget http://www-us.apache.org/dist/activemq/activemq-apollo/1.7.1/apache-apollo-1.7.1-unix-distro.tar.gz;
       tar xzf apache-apollo-1.7.1-unix-distro.tar.gz;
@@ -25,12 +25,12 @@ before_script:
       sudo service rabbitmq-server start;
     fi
   - if [ "$STOMP_PROVIDER" = 'activemq' ]; then
-      sudo apt install activemq tree;
+      sudo apt update && sudo apt install activemq;
       sudo cp tests/utils/activemq.xml /etc/activemq/instances-available/main/;
       sudo ln -s /etc/activemq/instances-available/main /etc/activemq/instances-enabled/main;
       sudo service activemq start;
     fi
-  - composer install --prefer-source
+  - composer install
 
 script:
   - vendor/bin/phpunit --coverage-text
