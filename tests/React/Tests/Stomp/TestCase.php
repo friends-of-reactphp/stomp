@@ -4,8 +4,6 @@ namespace React\Tests\Stomp;
 
 use PHPUnit\Framework\TestCase as PHPUnitCase;
 use React\Stomp\Protocol\Frame;
-use React\Tests\Stomp\Constraint\FrameIsEqual;
-use React\Tests\Stomp\Constraint\FrameHasHeader;
 
 class TestCase extends PHPUnitCase
 {
@@ -16,12 +14,17 @@ class TestCase extends PHPUnitCase
 
     protected function frameIsEqual(Frame $frame)
     {
-        return new FrameIsEqual($frame);
+        return $this->equalTo($frame);
     }
 
     protected function frameHasHeader($name, $value)
     {
-        return new FrameHasHeader($name, $value);
+        return $this->callback(function ($frame) use ($name, $value) {
+            $this->assertInstanceOf('React\Stomp\Protocol\Frame', $frame);
+            $this->assertEquals($value, $frame->getHeader($name));
+
+            return true;
+        });
     }
 
     protected function expectCallableOnce()
@@ -46,6 +49,6 @@ class TestCase extends PHPUnitCase
 
     protected function createCallableMock()
     {
-        return $this->createMock('React\Tests\Stomp\Stub\CallableStub');
+        return $this->getMockBuilder('stdClass')->setMethods(array('__invoke'))->getMock();
     }
 }

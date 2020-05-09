@@ -156,6 +156,7 @@ foo:bar\\r
     /**
     * @test
     * @dataProvider provideFrameCommandsThatMustNotHaveABody
+    * @doesNotPerformAssertions
     */
     public function itShouldAcceptOtherFramesWithoutBody($command)
     {
