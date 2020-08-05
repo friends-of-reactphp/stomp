@@ -13,7 +13,7 @@ class OutgoingPackageCreator
         $this->state = $state;
     }
 
-    public function connect($host, $login = null, $passcode = null)
+    public function connect($host, $login = null, $passcode = null, $heartbeat = null)
     {
         $this->state->startConnecting();
 
@@ -24,6 +24,12 @@ class OutgoingPackageCreator
                 'passcode'  => (string) $passcode,
             ));
         }
+        if (null !== $heartbeat) {
+            $headers = array_merge($headers, array(
+                'heart-beat' => $heartbeat,
+            ));
+        }
+
         return new Frame('CONNECT', $headers);
     }
 

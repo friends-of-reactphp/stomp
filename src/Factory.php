@@ -17,6 +17,7 @@ class Factory
         'vhost'     => '/',
         'login'     => 'guest',
         'passcode'  => 'guest',
+        'heart-beat' => null
     );
 
     private $loop;
