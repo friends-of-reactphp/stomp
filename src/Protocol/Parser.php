@@ -4,7 +4,12 @@ namespace React\Stomp\Protocol;
 
 class Parser
 {
-    public $allowedBodyCommands = array('SEND', 'MESSAGE', 'ERROR');
+    public $allowedBodyCommands = array(
+        'SEND',
+        'MESSAGE',
+        'ERROR',
+        'HEART-BEAT', // fake command name for heart-beat, original command in frame is empty string
+    );
 
     public function parse($data)
     {
@@ -57,11 +62,20 @@ class Parser
 
         $frame->body = $body;
 
+        $this->setFakeHeartbeatFrame($frame);
+
         if ($frame->body && !in_array($frame->command, $this->allowedBodyCommands)) {
             throw new InvalidFrameException(sprintf("Frames of command '%s' must not have a body.", $frame->command));
         }
 
         return $frame;
+    }
+
+    private function setFakeHeartbeatFrame($frame)
+    {
+        if ($frame->command === '') {
+            $frame->command = 'HEART-BEAT';
+        }
     }
 
     public function hasUndefinedEscapeSequences($line)

@@ -5,6 +5,7 @@ namespace React\Stomp;
 use Evenement\EventEmitter;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
+use React\Stomp\Client\Command\HeartbeatCommand;
 use React\Stomp\Client\IncomingPackageProcessor;
 use React\Stomp\Client\OutgoingPackageCreator;
 use React\Stomp\Client\State;
@@ -51,7 +52,6 @@ class Client extends EventEmitter
         $this->input->on('error', array($this, 'handleErrorEvent'));
         $this->input->on('close', array($this, 'handleCloseEvent'));
         $this->output = $output;
-
         $this->options = $this->sanatizeOptions($options);
     }
 
@@ -80,7 +80,8 @@ class Client extends EventEmitter
         $frame = $this->packageCreator->connect(
             $this->options['vhost'],
             $this->options['login'],
-            $this->options['passcode']
+            $this->options['passcode'],
+            $this->options['heart-beat']
         );
         $this->output->sendFrame($frame);
 
@@ -213,6 +214,11 @@ class Client extends EventEmitter
             return;
         }
 
+        if ($command instanceof HeartbeatCommand) {
+            $this->emit('heart-beat', array($this));
+            return;
+        }
+
         if ($command instanceof NullCommand) {
             return;
         }
@@ -250,6 +256,7 @@ class Client extends EventEmitter
             'vhost'     => isset($options['host']) ? $options['host'] : null,
             'login'     => null,
             'passcode'  => null,
+            'heart-beat'  => null,
         ), $options);
     }
 
