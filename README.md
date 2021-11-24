@@ -101,5 +101,5 @@ MIT, see LICENSE.
 
 ## Resources
 
-* [STOMP Protocol Specification, Version 1.1](http://stomp.github.com/stomp-specification-1.1.html)
+* [STOMP Protocol Specification, Version 1.1](https://stomp.github.io/stomp-specification-1.1.html)
 * [RabbitMQ STOMP Adapter](http://www.rabbitmq.com/stomp.html)
