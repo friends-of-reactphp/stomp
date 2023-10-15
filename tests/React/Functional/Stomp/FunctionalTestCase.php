@@ -2,10 +2,11 @@
 
 namespace React\Functional\Stomp;
 
+use PHPUnit\Framework\TestCase;
 use React\EventLoop\Factory as LoopFactory;
 use React\Stomp\Factory;
 
-abstract class FunctionalTestCase extends \PHPUnit_Framework_TestCase
+abstract class FunctionalTestCase extends TestCase
 {
     protected function getEventLoop()
     {

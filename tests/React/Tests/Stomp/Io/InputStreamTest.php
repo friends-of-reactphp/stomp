@@ -5,8 +5,6 @@ namespace React\Tests\Stomp;
 use React\Stomp\Io\InputStream;
 use React\Stomp\Protocol\Frame;
 use React\Stomp\Protocol\Parser;
-use React\Tests\Stomp\Constraint\FrameIsEqual;
-use React\Tests\Stomp\TestCase;
 
 class InputStreamTest extends TestCase
 {
@@ -96,7 +94,10 @@ class InputStreamTest extends TestCase
         $this->assertFalse($input->isWritable());
     }
 
-    /** @test */
+    /**
+     * @test
+     * @doesNotPerformAssertions
+     */
     public function writingAfterCloseShouldDoNothing()
     {
         $input = new InputStream(new Parser());
