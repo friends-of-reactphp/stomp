@@ -2,6 +2,7 @@
 
 namespace React\Stomp\Io;
 
+use React\Stomp\Protocol\Frame;
 use React\Stomp\Protocol\Parser;
 use Evenement\EventEmitter;
 use React\Stream\WritableStreamInterface;
@@ -26,6 +27,11 @@ final class InputStream extends EventEmitter implements WritableStreamInterface,
 
     public function write($data)
     {
+        if ($data === "\x0a") {
+            $this->emit('heart-beat', [new Frame('MESSAGE\nHEART-BEAT')]);
+            $data = '';
+        }
+
         $data = $this->buffer.$data;
         list($frames, $data) = $this->parser->parse($data);
         $this->buffer = $data;

@@ -50,8 +50,8 @@ class Client extends EventEmitter
         $this->input->on('frame', array($this, 'handleFrameEvent'));
         $this->input->on('error', array($this, 'handleErrorEvent'));
         $this->input->on('close', array($this, 'handleCloseEvent'));
+        $this->input->on('heart-beat', array($this, 'handleHeartbeatEvent'));
         $this->output = $output;
-
         $this->options = $this->sanatizeOptions($options);
     }
 
@@ -80,7 +80,8 @@ class Client extends EventEmitter
         $frame = $this->packageCreator->connect(
             $this->options['vhost'],
             $this->options['login'],
-            $this->options['passcode']
+            $this->options['passcode'],
+            $this->options['heart-beat']
         );
         $this->output->sendFrame($frame);
 
@@ -190,6 +191,11 @@ class Client extends EventEmitter
         $this->emit('close');
     }
 
+    public function handleHeartbeatEvent()
+    {
+        $this->emit('heart-beat');
+    }
+
     public function processFrame(Frame $frame)
     {
         $command = $this->packageProcessor->receiveFrame($frame);
@@ -250,6 +256,7 @@ class Client extends EventEmitter
             'vhost'     => isset($options['host']) ? $options['host'] : null,
             'login'     => null,
             'passcode'  => null,
+            'heart-beat'  => null,
         ), $options);
     }
 
